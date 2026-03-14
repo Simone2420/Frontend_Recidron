@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import {View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, SafeAreaView, FlatList, } from 'react-native';
+import {View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, SafeAreaView, FlatList,} from 'react-native';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, WasteColors } from '../../styles/colors';

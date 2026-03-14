@@ -97,8 +97,8 @@ export default function LoginScreen() {
       </ScrollView>
 
       <View style={styles.waveContainer} pointerEvents="none">
-         <View style={styles.waveLayer1} />
-         <View style={styles.waveLayer2} />
+        <View style={styles.waveLayer1} />
+        <View style={styles.waveLayer2} />
       </View>
     </KeyboardAvoidingView>
   );
