@@ -5,8 +5,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../../styles/colors';
 import { Button, InputField } from '../../components/ui';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useAuth } from '../../context/AuthContext';
 
 export default function LoginScreen() {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -16,15 +18,20 @@ export default function LoginScreen() {
     setError('');
     setIsLoading(true);
 
-    // Mock authentication logic
     setTimeout(() => {
       setIsLoading(false);
+
       if (!email || !password) {
         setError('Por favor, ingresa tu correo y contraseña.');
         return;
       }
-      
-      // Route based on mock role
+
+      const success = login(email, password);
+      if (!success) {
+        setError('Credenciales inválidas.');
+        return;
+      }
+
       if (email.toLowerCase() === 'admin@test.com') {
         router.replace('/(tabs)/admin-home');
       } else {
@@ -39,8 +46,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        {/* Header Section */}
+
         <Animated.View entering={FadeInDown.duration(800).delay(200)} style={styles.headerContainer}>
           <View style={styles.logoWrapper}>
             <MaterialIcons name="recycling" size={60} color={Colors.primary} />
@@ -49,7 +55,6 @@ export default function LoginScreen() {
           <Text style={styles.subtitle}>Gestión de Residuos — UniCundinamarca</Text>
         </Animated.View>
 
-        {/* Form Section */}
         <Animated.View entering={FadeInUp.duration(800).delay(400)} style={styles.formContainer}>
           <InputField
             label="Email"
@@ -60,7 +65,6 @@ export default function LoginScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
           />
-
           <InputField
             label="Contraseña"
             placeholder="••••••••"
@@ -69,7 +73,6 @@ export default function LoginScreen() {
             onChangeText={setPassword}
             secureTextEntry
           />
-
           <View style={styles.forgotPasswordContainer}>
             <Button
               title="¿Olvidaste tu contraseña?"
@@ -77,9 +80,7 @@ export default function LoginScreen() {
               style={styles.forgotPasswordBtn}
             />
           </View>
-
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
           <Button
             title="Iniciar sesión"
             onPress={handleLogin}
@@ -88,7 +89,6 @@ export default function LoginScreen() {
           />
         </Animated.View>
 
-        {/* Footer Section */}
         <Animated.View entering={FadeIn.duration(800).delay(600)} style={styles.footerContainer}>
           <Text style={styles.footerText}>¿No tienes una cuenta? </Text>
           <Text style={styles.registerText}>Regístrate</Text>
@@ -96,7 +96,6 @@ export default function LoginScreen() {
 
       </ScrollView>
 
-      {/* Background Decorative SVG Graphic Wrapper (Approximation of the wave) */}
       <View style={styles.waveContainer} pointerEvents="none">
          <View style={styles.waveLayer1} />
          <View style={styles.waveLayer2} />
@@ -184,7 +183,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-  // Decorative Background Approximations
   waveContainer: {
     position: 'absolute',
     bottom: 0,
