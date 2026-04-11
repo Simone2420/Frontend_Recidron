@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, Polyline, Rect, Stop } from 'react-native-svg';
-import { useAuth } from '../../src/context/AuthContext';
+import { useAuth } from '../../src/store/authStore';
 import { Colors, WasteColors } from '../../src/styles/colors';
 
 // ─── Donut Chart ─────────────────────────────────────────────────────────────

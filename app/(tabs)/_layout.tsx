@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { useAuth } from '../../src/context/AuthContext';
+import { useAuth } from '../../src/store/authStore';
 import { Colors } from '../../src/styles/colors';
 
 export default function TabsLayout() {

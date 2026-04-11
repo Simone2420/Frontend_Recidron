@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Button, InputField } from '../../src/components/ui';
-import { useAuth } from '../../src/context/AuthContext';
+import { useAuth } from '../../src/store/authStore';
 import { Colors } from '../../src/styles/colors';
 
 export default function LoginScreen() {
