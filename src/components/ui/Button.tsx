@@ -1,6 +1,6 @@
-import React from 'react';
-import { TouchableOpacity, Text, View, StyleSheet, ActivityIndicator, TouchableOpacityProps } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import React from 'react';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, TouchableOpacityProps, View } from 'react-native';
 import { Colors } from '../../styles/colors';
 
 export interface ButtonProps extends TouchableOpacityProps {

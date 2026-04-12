@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors } from '../../styles/colors';
-import { Button, InputField } from '../../components/ui';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { useAuth } from '../../context/AuthContext';
+import { Button, InputField } from '../../src/components/ui';
+import { useAuth } from '../../src/store/authStore';
+import { Colors } from '../../src/styles/colors';
 
 export default function LoginScreen() {
   const { login } = useAuth();

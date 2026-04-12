@@ -1,9 +1,9 @@
-import React from 'react';
-import {View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView,} from 'react-native';
-import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors } from '../../styles/colors';
-import { useAuth } from '../../context/AuthContext';
+import { router } from 'expo-router';
+import React from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
+import { useAuth } from '../../src/store/authStore';
+import { Colors } from '../../src/styles/colors';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();

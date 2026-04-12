@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import {View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, SafeAreaView, FlatList,} from 'react-native';
-import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, WasteColors } from '../../styles/colors';
-import { ReportCard } from '../../components/cards';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
+import { ReportCard } from '../../src/components/cards';
+import { Colors, WasteColors } from '../../src/styles/colors';
 
 const FILTERS = ['Todos', 'Aprovechable', 'Peligroso', 'Orgánico', 'No Aprovechable'] as const;
 type FilterType = typeof FILTERS[number];

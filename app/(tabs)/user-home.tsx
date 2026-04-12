@@ -1,16 +1,15 @@
-import React from 'react';
-import {View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView,} from 'react-native';
-import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import React from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { Colors } from '../../styles/colors';
-import { StatCard } from '../../components/cards';
+import { StatCard } from '../../src/components/cards';
+import { Colors } from '../../src/styles/colors';
 
 // Datos mock — reemplazar con llamadas reales a la API cuando esté lista
 const STATS = [
   { title: 'Total Reportes', value: '128', subtitle: '+12 este mes' },
-  { title: 'Zonas Activas',  value: '12',  subtitle: '4 en monitoreo' },
-  { title: 'Material Top',   value: 'Plástico', subtitle: '45% del total' },
+  { title: 'Zonas Activas', value: '12', subtitle: '4 en monitoreo' },
+  { title: 'Material Top', value: 'Plástico', subtitle: '45% del total' },
   { title: 'Último Reporte', value: '2h', subtitle: 'En Zona Norte' },
 ];
 

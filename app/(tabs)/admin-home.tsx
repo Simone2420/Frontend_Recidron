@@ -1,10 +1,10 @@
-import React from 'react';
-import {View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, } from 'react-native';
-import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, WasteColors } from '../../styles/colors';
-import Svg, { Path, Circle, Rect, Defs, LinearGradient, Stop, Polyline } from 'react-native-svg';
-import { useAuth } from '../../context/AuthContext';
+import { router } from 'expo-router';
+import React from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
+import Svg, { Circle, Defs, LinearGradient, Path, Polyline, Rect, Stop } from 'react-native-svg';
+import { useAuth } from '../../src/store/authStore';
+import { Colors, WasteColors } from '../../src/styles/colors';
 
 // ─── Donut Chart ─────────────────────────────────────────────────────────────
 function DonutChart() {
