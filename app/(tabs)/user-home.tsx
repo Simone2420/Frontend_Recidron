@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
@@ -65,9 +66,7 @@ export default function UserHomeScreen() {
           <TouchableOpacity
             style={styles.fab}
             activeOpacity={0.85}
-            onPress={() => {
-              // TODO: navegar a pantalla de nuevo reporte
-            }}
+            onPress={() => router.push('/new-report')}
           >
             <MaterialIcons name="add" size={22} color={Colors.white} />
             <Text style={styles.fabText}>Nuevo Reporte</Text>
