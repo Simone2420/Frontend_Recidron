@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TextInputProps } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
 import { Colors } from '../../styles/colors';
 
 export interface InputFieldProps extends TextInputProps {

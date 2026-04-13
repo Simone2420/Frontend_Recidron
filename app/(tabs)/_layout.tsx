@@ -1,8 +1,8 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors } from '../../styles/colors';
-import { useAuth } from '../../context/AuthContext';
+import { Tabs } from 'expo-router';
+import React from 'react';
+import { useAuth } from '../../src/store/authStore';
+import { Colors } from '../../src/styles/colors';
 
 export default function TabsLayout() {
   const { user } = useAuth();
@@ -17,13 +17,13 @@ export default function TabsLayout() {
         tabBarStyle: isAdmin
           ? { display: 'none' }  // Admin no tiene tab bar
           : {
-              borderTopWidth: 1,
-              borderTopColor: Colors.slate200,
-              backgroundColor: Colors.white,
-              height: 60,
-              paddingBottom: 8,
-              paddingTop: 8,
-            },
+            borderTopWidth: 1,
+            borderTopColor: Colors.slate200,
+            backgroundColor: Colors.white,
+            height: 60,
+            paddingBottom: 8,
+            paddingTop: 8,
+          },
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: '600',

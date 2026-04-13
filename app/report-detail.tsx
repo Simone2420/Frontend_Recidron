@@ -1,15 +1,15 @@
+import { MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { router } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Colors } from '../styles/colors';
+import { Colors } from '../src/styles/colors';
 
 export default function ReportDetailScreen() {
   return (
