@@ -1,39 +1,51 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useState, useCallback } from 'react';
 import { FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
 import { ReportCard } from '../../src/components/cards';
+import { getAllReports, getReportsByUser } from '../../src/services/database';
+import { useAuth } from '../../src/store/authStore';
 import { Colors, WasteColors } from '../../src/styles/colors';
+import { WasteReport } from '../../src/types/report';
 
 const FILTERS = ['Todos', 'Aprovechable', 'Peligroso', 'Orgánico', 'No Aprovechable'] as const;
 type FilterType = typeof FILTERS[number];
 
-type Report = {
-  id: string;
-  type: keyof typeof WasteColors;
-  location: string;
-  material: string;
-  dateStr: string;
-};
-
-const MOCK_REPORTS: Report[] = [
-  { id: '1', type: 'Aprovechable', location: 'Zona Norte - Parque Central', material: 'Plástico PET y Cartón', dateStr: 'Hoy, 10:30 AM' },
-  { id: '2', type: 'Peligroso', location: 'Zona Industrial 4', material: 'Baterías y Químicos', dateStr: 'Ayer, 04:15 PM' },
-  { id: '3', type: 'Orgánico', location: 'Barrio Miraflores', material: 'Residuos de Alimentos', dateStr: '22 Oct, 08:00 AM' },
-  { id: '4', type: 'No Aprovechable', location: 'Centro Histórico', material: 'Papel higiénico y servilletas', dateStr: '21 Oct, 11:20 AM' },
-  { id: '5', type: 'Aprovechable', location: 'Biblioteca General', material: 'Cartón y Papel', dateStr: '20 Oct, 09:00 AM' },
-  { id: '6', type: 'Orgánico', location: 'Comedor Estudiantil', material: 'Residuos de cocina', dateStr: '19 Oct, 07:30 AM' },
-];
-
 export default function ReportsScreen() {
+  const { user } = useAuth();
+  const [reports, setReports] = useState<WasteReport[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('Todos');
 
-  const filteredReports = MOCK_REPORTS.filter((report) => {
-    const matchesFilter = activeFilter === 'Todos' || report.type === activeFilter;
+  const loadReports = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      let data: WasteReport[] = [];
+      if (user?.role === 'admin') {
+        data = await getAllReports();
+      } else if (user?.email) {
+        data = await getReportsByUser(user.email);
+      }
+      setReports(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadReports();
+    }, [loadReports])
+  );
+
+  const filteredReports = reports.filter((report) => {
+    const matchesFilter = activeFilter === 'Todos' || report.category === activeFilter;
     const matchesSearch =
       search === '' ||
-      report.location.toLowerCase().includes(search.toLowerCase()) ||
+      report.zone.toLowerCase().includes(search.toLowerCase()) ||
       report.material.toLowerCase().includes(search.toLowerCase());
     return matchesFilter && matchesSearch;
   });
@@ -90,9 +102,11 @@ export default function ReportsScreen() {
 
       <FlatList
         data={filteredReports}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshing={isLoading}
+        onRefresh={loadReports}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <MaterialIcons name="search-off" size={48} color={Colors.slate200} />
@@ -101,10 +115,12 @@ export default function ReportsScreen() {
         }
         renderItem={({ item }) => (
           <ReportCard
-            type={item.type}
-            location={item.location}
+            type={item.category}
+            location={item.zone}
             material={item.material}
-            dateStr={item.dateStr}
+            dateStr={new Date(item.createdAt).toLocaleDateString() === new Date().toLocaleDateString() 
+              ? `Hoy, ${new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+              : new Date(item.createdAt).toLocaleDateString([], { day: '2-digit', month: 'short' })}
             onPress={() => router.push({ pathname: '/report-detail', params: { id: item.id } })}
           />
         )}

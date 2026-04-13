@@ -4,12 +4,15 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { Button, InputField } from '../src/components/ui';
+import { addReport } from '../src/services/database';
+import { useAuth } from '../src/store/authStore';
 import { Colors, WasteColors } from '../src/styles/colors';
 
 type CategoryType = keyof typeof WasteColors;
 type SizeType = 'Leve' | 'Mediano (2-5kg)' | 'Crítico';
 
 export default function NewReportScreen() {
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -30,13 +33,36 @@ export default function NewReportScreen() {
     else router.back();
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!category || !zone || !exactPoint || !size) {
+      alert('Por favor, completa todos los campos del reporte.');
+      return;
+    }
+
     setIsSubmitting(true);
-    setTimeout(() => {
+    
+    try {
+      const success = await addReport({
+        category,
+        material: material || 'No especificado',
+        zone,
+        exactPoint,
+        size,
+        photoTaken: photoTaken ? 1 : 0,
+        userId: user?.email || 'anonimo@test.com',
+      });
+
+      if (success) {
+        router.replace('/(tabs)/reports');
+      } else {
+        alert('Error al guardar el reporte localmente.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Ocurrió un error inesperado.');
+    } finally {
       setIsSubmitting(false);
-      // Redirigimos simulando que el reporte se procesó exitosamente a ver su Detalle de ID
-      router.replace('/(tabs)/reports');
-    }, 1500);
+    }
   };
 
   const renderStepIndicator = () => (
