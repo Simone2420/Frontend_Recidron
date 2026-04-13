@@ -1,18 +1,38 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
+import React, { useState } from 'react';
+import { KeyboardAvoidingView, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../src/store/authStore';
 import { Colors } from '../../src/styles/colors';
+import { Button, InputField } from '../../src/components/ui';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
 
-  const userName = 'Usuario de Prueba';
+  const [isEditVisible, setIsEditVisible] = useState(false);
+  const [editName, setEditName] = useState('Usuario de Prueba');
+  const [editEmail, setEditEmail] = useState(user?.email || '');
+  const [editPassword, setEditPassword] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const userName = editName;
   const userInitials = 'CP';
   const userRole = user?.role === 'admin' ? 'Administrador' : 'Invitado';
   const reportCount = 128;
   const memberSince = 'Oct 2023';
+
+  const handleSave = () => {
+    setIsSaving(true);
+    // Simula petición al backend
+    setTimeout(() => {
+      setIsSaving(false);
+      setIsEditVisible(false);
+      setEditPassword(''); // Vaciamos por seguridad al cerrar
+    }, 1200);
+  };
+
+  const isPasswordWeak = editPassword.length > 0 && editPassword.length < 8;
+  const isPasswordStrong = editPassword.length >= 8;
 
   const handleLogout = () => {
     logout();
@@ -60,6 +80,19 @@ export default function ProfileScreen() {
         <View style={styles.optionsList}>
           <TouchableOpacity
             style={styles.optionItem}
+            onPress={() => setIsEditVisible(true)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.optionLeft}>
+              <View style={styles.optionIconWrapper}>
+                <MaterialIcons name="person-outline" size={22} color={Colors.primary} />
+              </View>
+              <Text style={styles.optionText}>Editar Perfil y Seguridad</Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={24} color={Colors.slate400} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.optionItem}
             onPress={() => router.push('/(tabs)/reports')}
             activeOpacity={0.7}
           >
@@ -84,6 +117,69 @@ export default function ProfileScreen() {
 
         <View style={{ height: 32 }} />
       </ScrollView>
+
+      {/* BOTTOM SHEET: Editar Perfil */}
+      <Modal
+        visible={isEditVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsEditVisible(false)}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.bottomSheet}>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Ajustes de Perfil</Text>
+              <TouchableOpacity onPress={() => setIsEditVisible(false)} style={styles.closeBtn}>
+                <MaterialIcons name="close" size={22} color={Colors.slate900} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.sheetSubtitle}>Modifica tu identidad y protege tu cuenta.</Text>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.sheetForm}>
+              <InputField
+                label="Nombre Público"
+                icon="person"
+                value={editName}
+                onChangeText={setEditName}
+              />
+              <InputField
+                label="Correo de Notificaciones"
+                icon="mail"
+                value={editEmail}
+                onChangeText={setEditEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              
+              <View style={styles.separator} />
+
+              <InputField
+                label="Nueva Contraseña (Opcional)"
+                icon="lock"
+                value={editPassword}
+                onChangeText={setEditPassword}
+                secureTextEntry
+                placeholder="Escribe tu nueva clave"
+                error={isPasswordWeak ? 'Insegura: Mínimo 8 caracteres.' : undefined}
+              />
+              {isPasswordStrong && (
+                <Text style={styles.passwordSuccessText}>✓ Nivel de seguridad óptimo</Text>
+              )}
+
+              <Button
+                title="Actualizar Datos"
+                onPress={handleSave}
+                isLoading={isSaving}
+                style={styles.saveBtn}
+              />
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -145,4 +241,63 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dangerLight, borderWidth: 1, borderColor: '#C6282820',
   },
   logoutText: { fontSize: 15, fontWeight: 'bold', color: Colors.danger },
+
+  // --- Estilos del Bottom Sheet ---
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  bottomSheet: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    maxHeight: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 20,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sheetTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.slate900,
+  },
+  closeBtn: {
+    padding: 4,
+    backgroundColor: Colors.slate100,
+    borderRadius: 16,
+  },
+  sheetSubtitle: {
+    fontSize: 14,
+    color: Colors.slate500,
+    marginBottom: 20,
+  },
+  sheetForm: {
+    paddingBottom: 24,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: Colors.slate200,
+    marginVertical: 16,
+  },
+  saveBtn: {
+    marginTop: 24,
+  },
+  passwordSuccessText: {
+    color: '#059669', // Verde confirmación
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: -8, // Lo subo poquito hacia el input
+    marginBottom: 16,
+    paddingHorizontal: 6,
+  },
 });
