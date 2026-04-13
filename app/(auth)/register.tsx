@@ -4,40 +4,32 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Button, InputField } from '../../src/components/ui';
-import { useAuth } from '../../src/store/authStore';
 import { Colors } from '../../src/styles/colors';
 
-export default function LoginScreen() {
-  const { login } = useAuth();
+export default function RegisterScreen() {
+  const [fullName, setFullName] = useState('');
+  const [studentCode, setStudentCode] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = () => {
+  const handleRegister = () => {
     setError('');
     setIsLoading(true);
 
+    // Mock API call Simulation
     setTimeout(() => {
       setIsLoading(false);
 
-      if (!email || !password) {
-        setError('Por favor, ingresa tu correo y contraseña.');
+      if (!fullName || !studentCode || !email || !password) {
+        setError('Por favor, completa todos los campos para registrarte.');
         return;
       }
 
-      const success = login(email, password);
-      if (!success) {
-        setError('Credenciales inválidas.');
-        return;
-      }
-
-      if (email.toLowerCase() === 'admin@test.com') {
-        router.replace('/(tabs)/admin-home');
-      } else {
-        router.replace('/(tabs)/user-home');
-      }
-    }, 1000);
+      // Volvemos exitosamente atrás (Login)
+      router.back();
+    }, 1500);
   };
 
   return (
@@ -47,17 +39,33 @@ export default function LoginScreen() {
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-        <Animated.View entering={FadeInDown.duration(800).delay(200)} style={styles.headerContainer}>
-          <View style={styles.logoWrapper}>
-            <MaterialIcons name="recycling" size={60} color={Colors.primary} />
-          </View>
-          <Text style={styles.title}>Recidron</Text>
-          <Text style={styles.subtitle}>Gestión de Residuos — UniCundinamarca</Text>
+        <Animated.View entering={FadeInDown.duration(800).delay(100)} style={styles.headerContainer}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+            <MaterialIcons name="arrow-back" size={24} color={Colors.slate900} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Crea tu cuenta</Text>
+          <Text style={styles.subtitle}>Súmate al control responsable de la Universidad con Recidron</Text>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(800).delay(400)} style={styles.formContainer}>
+        <Animated.View entering={FadeInUp.duration(800).delay(300)} style={styles.formContainer}>
           <InputField
-            label="Email"
+            label="Nombre Completo"
+            placeholder="Ej. María López"
+            icon="person"
+            value={fullName}
+            onChangeText={setFullName}
+            autoCapitalize="words"
+          />
+          <InputField
+            label="Código Estudiantil"
+            placeholder="Ej. 100456"
+            icon="badge"
+            value={studentCode}
+            onChangeText={setStudentCode}
+            keyboardType="numeric"
+          />
+          <InputField
+            label="Correo Institucional"
             placeholder="usuario@unicundinamarca.edu.co"
             icon="mail"
             value={email}
@@ -66,38 +74,34 @@ export default function LoginScreen() {
             autoCapitalize="none"
           />
           <InputField
-            label="Contraseña"
-            placeholder="••••••••"
+            label="Contraseña segura"
+            placeholder="Mínimo 8 caracteres"
             icon="lock"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
           />
-          <View style={styles.forgotPasswordContainer}>
-            <Button
-              title="¿Olvidaste tu contraseña?"
-              variant="text"
-              style={styles.forgotPasswordBtn}
-            />
-          </View>
+          
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          
           <Button
-            title="Iniciar sesión"
-            onPress={handleLogin}
+            title="Registrarse"
+            onPress={handleRegister}
             isLoading={isLoading}
-            style={styles.loginBtn}
+            style={styles.registerBtn}
           />
         </Animated.View>
 
-        <Animated.View entering={FadeIn.duration(800).delay(600)} style={styles.footerContainer}>
-          <Text style={styles.footerText}>¿No tienes una cuenta? </Text>
-          <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(auth)/register')}>
-            <Text style={styles.registerText}>Regístrate</Text>
+        <Animated.View entering={FadeIn.duration(800).delay(500)} style={styles.footerContainer}>
+          <Text style={styles.footerText}>¿Ya tienes cuenta en Recidron? </Text>
+          <TouchableOpacity activeOpacity={0.7} onPress={() => router.back()}>
+            <Text style={styles.loginText}>Inicia sesión</Text>
           </TouchableOpacity>
         </Animated.View>
 
       </ScrollView>
 
+      {/* Ondas decorativas de fondo para consistencia visual */}
       <View style={styles.waveContainer} pointerEvents="none">
         <View style={styles.waveLayer1} />
         <View style={styles.waveLayer2} />
@@ -119,50 +123,41 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   headerContainer: {
-    alignItems: 'center',
     marginBottom: 40,
+    marginTop: 24,
   },
-  logoWrapper: {
-    width: 96,
-    height: 96,
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: Colors.white,
-    borderRadius: 48,
-    alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: Colors.slate900,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   title: {
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: 'bold',
     color: Colors.slate900,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
     color: Colors.slate500,
-    textAlign: 'center',
+    lineHeight: 20,
   },
   formContainer: {
     width: '100%',
-    marginBottom: 32,
+    marginBottom: 24,
   },
-  forgotPasswordContainer: {
-    alignItems: 'flex-end',
-    marginBottom: 16,
-    marginTop: -8,
-  },
-  forgotPasswordBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 0,
-  },
-  loginBtn: {
-    marginTop: 8,
+  registerBtn: {
+    marginTop: 16,
   },
   errorText: {
     color: Colors.danger,
@@ -175,12 +170,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 'auto',
+    marginBottom: 24,
   },
   footerText: {
     color: Colors.slate500,
     fontSize: 14,
   },
-  registerText: {
+  loginText: {
     color: Colors.primary,
     fontWeight: 'bold',
     fontSize: 14,
