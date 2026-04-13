@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Button, InputField } from '../../src/components/ui';
+import { getUserByEmail } from '../../src/services/database';
 import { useAuth } from '../../src/store/authStore';
 import { Colors } from '../../src/styles/colors';
 
@@ -14,30 +15,45 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setError('');
     setIsLoading(true);
 
-    setTimeout(() => {
+    if (!email || !password) {
+      setError('Por favor, ingresa tu correo y contraseña.');
       setIsLoading(false);
+      return;
+    }
 
-      if (!email || !password) {
-        setError('Por favor, ingresa tu correo y contraseña.');
+    try {
+      const user = await getUserByEmail(email.toLowerCase());
+
+      if (!user) {
+        setError('El usuario no existe.');
+        setIsLoading(false);
         return;
       }
 
-      const success = login(email, password);
-      if (!success) {
-        setError('Credenciales inválidas.');
+      // En un app real usaríamos bcrypt o algo similar, aquí comparamos texto plano por simplicidad local
+      if (user.password !== password) {
+        setError('Contraseña incorrecta.');
+        setIsLoading(false);
         return;
       }
 
-      if (email.toLowerCase() === 'admin@test.com') {
+      // Actualizar el store global de Zustand con el nombre real
+      login(user.email, user.fullName, user.role);
+
+      if (user.role === 'admin') {
         router.replace('/(tabs)/admin-home');
       } else {
         router.replace('/(tabs)/user-home');
       }
-    }, 1000);
+    } catch (err) {
+      setError('Error al intentar iniciar sesión.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

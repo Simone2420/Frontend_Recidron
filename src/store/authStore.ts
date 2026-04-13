@@ -4,23 +4,20 @@ type Role = 'admin' | 'user' | null;
 
 interface AuthUser {
   email: string;
+  fullName: string;
   role: Role;
 }
 
 interface AuthState {
   user: AuthUser | null;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, fullName: string, role: Role) => void;
   logout: () => void;
 }
 
 export const useAuth = create<AuthState>((set) => ({
   user: null,
-  login: (email: string, password: string): boolean => {
-    if (!email || !password) return false;
-
-    const role: Role = email.toLowerCase() === 'admin@test.com' ? 'admin' : 'user';
-    set({ user: { email, role } });
-    return true;
+  login: (email: string, fullName: string, role: Role): void => {
+    set({ user: { email, fullName, role } });
   },
   logout: () => {
     set({ user: null });

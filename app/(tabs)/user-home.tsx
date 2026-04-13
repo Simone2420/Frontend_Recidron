@@ -4,6 +4,7 @@ import React from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { StatCard } from '../../src/components/cards';
+import { useAuth } from '../../src/store/authStore';
 import { Colors } from '../../src/styles/colors';
 
 // Datos mock — reemplazar con llamadas reales a la API cuando esté lista
@@ -15,6 +16,8 @@ const STATS = [
 ];
 
 export default function UserHomeScreen() {
+  const { user } = useAuth();
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -29,7 +32,7 @@ export default function UserHomeScreen() {
           <View>
             <Text style={styles.welcomeText}>Bienvenido de vuelta</Text>
             <Text style={styles.greetingText}>
-              Hola, <Text style={styles.greetingName}>Usuario</Text>
+              Hola, <Text style={styles.greetingName}>{user?.fullName || 'Usuario'}</Text>
             </Text>
           </View>
         </Animated.View>

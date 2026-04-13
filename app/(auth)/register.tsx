@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Button, InputField } from '../../src/components/ui';
+import { registerUser } from '../../src/services/database';
 import { Colors } from '../../src/styles/colors';
 
 export default function RegisterScreen() {
@@ -14,22 +15,35 @@ export default function RegisterScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     setError('');
     setIsLoading(true);
 
-    // Mock API call Simulation
-    setTimeout(() => {
+    if (!fullName || !studentCode || !email || !password) {
+      setError('Por favor, completa todos los campos para registrarte.');
       setIsLoading(false);
+      return;
+    }
 
-      if (!fullName || !studentCode || !email || !password) {
-        setError('Por favor, completa todos los campos para registrarte.');
-        return;
+    try {
+      const success = await registerUser({
+        fullName,
+        studentCode,
+        email,
+        password,
+      });
+
+      if (success) {
+        // Redirigir al login después de un registro exitoso local
+        router.back();
+      } else {
+        setError('Error al registrar el usuario. Es posible que el correo ya esté en uso.');
       }
-
-      // Volvemos exitosamente atrás (Login)
-      router.back();
-    }, 1500);
+    } catch (err) {
+      setError('Ocurrió un error inesperado durante el registro.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

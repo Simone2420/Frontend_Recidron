@@ -201,21 +201,24 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function AdminHomeScreen() {
-  const { logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-    router.replace('/(auth)/login');
-  };
-
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.topHeader}>
-        <View style={styles.topHeaderIcon}>
-          <MaterialIcons name="security" size={24} color={Colors.white} />
+    const { user, logout } = useAuth();
+  
+    const handleLogout = () => {
+      logout();
+      router.replace('/(auth)/login');
+    };
+  
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.topHeader}>
+          <View style={styles.topHeaderIcon}>
+            <MaterialIcons name="security" size={24} color={Colors.white} />
+          </View>
+          <View>
+            <Text style={styles.topHeaderSubtitle}>Hola, {user?.fullName || 'Admin'}</Text>
+            <Text style={styles.topHeaderTitle}>Panel de Control</Text>
+          </View>
         </View>
-        <Text style={styles.topHeaderTitle}>Panel de Administración</Text>
-      </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
@@ -283,6 +286,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 14,
   },
   topHeaderIcon: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 10 },
+  topHeaderSubtitle: { fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: '500' },
   topHeaderTitle: { fontSize: 18, fontWeight: 'bold', color: Colors.white, letterSpacing: -0.3 },
   scrollContent: { paddingBottom: 48, gap: 16 },
   kpiRow: { paddingHorizontal: 16, paddingTop: 16, gap: 12 },

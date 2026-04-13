@@ -10,16 +10,22 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
 
   const [isEditVisible, setIsEditVisible] = useState(false);
-  const [editName, setEditName] = useState('Usuario de Prueba');
+  const [editName, setEditName] = useState(user?.fullName || 'Usuario');
   const [editEmail, setEditEmail] = useState(user?.email || '');
   const [editPassword, setEditPassword] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  const userName = editName;
-  const userInitials = 'CP';
-  const userRole = user?.role === 'admin' ? 'Administrador' : 'Invitado';
-  const reportCount = 128;
-  const memberSince = 'Oct 2023';
+  const userName = user?.fullName || editName;
+  const userInitials = userName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+  
+  const userRole = user?.role === 'admin' ? 'Administrador' : 'Estudiante / Usuario';
+  const reportCount = user?.role === 'admin' ? 0 : 12; // Un número de ejemplo para usuarios normales
+  const memberSince = 'Abril 2026';
 
   const handleSave = () => {
     setIsSaving(true);
