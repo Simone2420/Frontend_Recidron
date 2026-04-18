@@ -11,7 +11,7 @@ cd Frontend_Recidron
 Instala las dependencias:
 
 npm install
-npx expo install react-native-svg
+
 
 
 Iniciar el codigo:
