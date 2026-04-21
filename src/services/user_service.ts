@@ -27,5 +27,17 @@ export const userService = {
     // O si usas el /reportes/ para contar. Lo simulamos con la petición.
     const response = await api.get('/reportes/stats/my');
     return response.data; // { total_reports: 5, active_zones: 2, top_material: "Plástico"... }
+  },
+
+  getAllUsers: async () => {
+    // Método administrativo: Listar todos
+    const response = await api.get('/usuarios/');
+    return response.data;
+  },
+
+  changeUserRole: async (userId: number, roleId: number) => {
+    // Método administrativo: Cambiar el rol.
+    const response = await api.put(`/usuarios/${userId}`, { rol_id: roleId });
+    return response.data;
   }
 };

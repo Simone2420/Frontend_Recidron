@@ -290,6 +290,15 @@ export default function AdminHomeScreen() {
           </View>
         </View>
 
+        <TouchableOpacity 
+          style={styles.usersBtn} 
+          activeOpacity={0.85}
+          onPress={() => router.push('/admin-users')}
+        >
+          <MaterialIcons name="people" size={22} color={Colors.white} />
+          <Text style={styles.usersBtnText}>Gestión de Usuarios y Roles</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.pdfBtn} activeOpacity={0.85}>
           <MaterialIcons name="download" size={22} color={Colors.white} />
           <Text style={styles.pdfBtnText}>Descargar Reporte PDF</Text>
@@ -373,6 +382,13 @@ const styles = StyleSheet.create({
   recentBadgeText: { fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 0.3 },
   recentLocation: { fontSize: 12, fontWeight: '500', color: Colors.slate700 },
   recentTime: { fontSize: 10, color: Colors.slate400 },
+  usersBtn: {
+    marginHorizontal: 16, backgroundColor: Colors.slate800, borderRadius: 16,
+    paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    shadowColor: Colors.slate900, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2, shadowRadius: 8, elevation: 4,
+  },
+  usersBtnText: { fontSize: 15, fontWeight: 'bold', color: Colors.white },
   pdfBtn: {
     marginHorizontal: 16, backgroundColor: Colors.primary, borderRadius: 16,
     paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
