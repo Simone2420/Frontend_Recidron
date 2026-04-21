@@ -1,9 +1,10 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, Polyline, Rect, Stop } from 'react-native-svg';
 import { useAuth } from '../../src/store/authStore';
+import { statsService, DashboardStats } from '../../src/services/stats_service';
 import { Colors, WasteColors } from '../../src/styles/colors';
 
 // ─── Donut Chart ─────────────────────────────────────────────────────────────
@@ -202,6 +203,31 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function AdminHomeScreen() {
   const { logout } = useAuth();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const data = await statsService.getDashboardStats();
+      setStats(data);
+    } catch (error) {
+      console.log('Error fetching stats, usando datos de prueba', error);
+      // Usamos datos de prueba si falla la API
+      setStats({
+        total_reports: 1284,
+        active_users: 456,
+        most_active_zone: 'Zona Norte',
+        dangerous_waste_count: 82,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -219,24 +245,28 @@ export default function AdminHomeScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.kpiRow}>
-          <View style={styles.kpiCard}>
-            <Text style={styles.kpiLabel}>Total Reportes</Text>
-            <Text style={styles.kpiValue}>1,284</Text>
-          </View>
-          <View style={styles.kpiCard}>
-            <Text style={styles.kpiLabel}>Usuarios Activos</Text>
-            <Text style={styles.kpiValue}>456</Text>
-          </View>
-          <View style={styles.kpiCard}>
-            <Text style={styles.kpiLabel}>Más Actividad</Text>
-            <Text style={styles.kpiValue}>Zona Norte</Text>
-          </View>
-          <View style={[styles.kpiCard, styles.kpiCardDanger]}>
-            <Text style={styles.kpiLabelDanger}>Res. Peligrosos</Text>
-            <Text style={styles.kpiValueDanger}>82</Text>
-          </View>
-        </ScrollView>
+        {loading ? (
+          <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 24 }} />
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.kpiRow}>
+            <View style={styles.kpiCard}>
+              <Text style={styles.kpiLabel}>Total Reportes</Text>
+              <Text style={styles.kpiValue}>{stats?.total_reports}</Text>
+            </View>
+            <View style={styles.kpiCard}>
+              <Text style={styles.kpiLabel}>Usuarios Activos</Text>
+              <Text style={styles.kpiValue}>{stats?.active_users}</Text>
+            </View>
+            <View style={styles.kpiCard}>
+              <Text style={styles.kpiLabel}>Más Actividad</Text>
+              <Text style={styles.kpiValue}>{stats?.most_active_zone}</Text>
+            </View>
+            <View style={[styles.kpiCard, styles.kpiCardDanger]}>
+              <Text style={styles.kpiLabelDanger}>Res. Peligrosos</Text>
+              <Text style={styles.kpiValueDanger}>{stats?.dangerous_waste_count}</Text>
+            </View>
+          </ScrollView>
+        )}
 
         <ChartCard title="Distribución por Tipo de Residuo"><DonutChart /></ChartCard>
         <ChartCard title="Reportes por Zona del Campus"><BarChart /></ChartCard>

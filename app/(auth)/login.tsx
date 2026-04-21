@@ -14,30 +14,31 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setError('');
+
+    if (!email || !password) {
+      setError('Por favor, ingresa tu correo y contraseña.');
+      return;
+    }
+
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    const { success, error: loginError } = await login(email, password);
+    
+    setIsLoading(false);
 
-      if (!email || !password) {
-        setError('Por favor, ingresa tu correo y contraseña.');
-        return;
-      }
+    if (!success) {
+      setError(loginError || 'Credenciales inválidas.');
+      return;
+    }
 
-      const success = login(email, password);
-      if (!success) {
-        setError('Credenciales inválidas.');
-        return;
-      }
-
-      if (email.toLowerCase() === 'admin@test.com') {
-        router.replace('/(tabs)/admin-home');
-      } else {
-        router.replace('/(tabs)/user-home');
-      }
-    }, 1000);
+    const currentUser = useAuth.getState().user;
+    if (currentUser?.role === 'admin') {
+      router.replace('/(tabs)/admin-home');
+    } else {
+      router.replace('/(tabs)/user-home');
+    }
   };
 
   return (
