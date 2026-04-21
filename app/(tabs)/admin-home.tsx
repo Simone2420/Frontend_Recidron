@@ -8,18 +8,23 @@ import { statsService, DashboardStats } from '../../src/services/stats_service';
 import { Colors, WasteColors } from '../../src/styles/colors';
 
 // ─── Donut Chart ─────────────────────────────────────────────────────────────
-function DonutChart() {
+function DonutChart({ data }: { data: Array<{ label: string; value: number }> }) {
   const size = 180;
   const cx = size / 2;
   const cy = size / 2;
   const r = 60;
   const strokeWidth = 24;
-  const segments = [
-    { pct: 0.35, color: '#2E7D32' },
-    { pct: 0.30, color: '#00695C' },
-    { pct: 0.20, color: '#78909C' },
-    { pct: 0.15, color: '#C62828' },
-  ];
+
+  const actualTotal = data.reduce((sum, item) => sum + item.value, 0);
+  const divisorTotal = actualTotal || 1; // Para evitar división por cero
+  const colors = ['#2E7D32', '#00695C', '#78909C', '#C62828', '#FBC02D', '#5D4037'];
+  
+  const segments = data.map((item, i) => ({
+    pct: item.value / divisorTotal,
+    color: colors[i % colors.length],
+    label: `${item.label} (${Math.round((item.value / divisorTotal) * 100)}%)`
+  }));
+
   const circumference = 2 * Math.PI * r;
   let cumulative = 0;
   const arcs = segments.map((seg) => {
@@ -35,7 +40,7 @@ function DonutChart() {
       <View style={{ width: size, height: size }}>
         <Svg width={size} height={size}>
           <Circle cx={cx} cy={cy} r={r} fill="none" stroke={Colors.slate100} strokeWidth={strokeWidth} />
-          {arcs.map((arc, i) => (
+          {actualTotal > 0 && arcs.map((arc, i) => (
             <Circle
               key={i} cx={cx} cy={cy} r={r} fill="none"
               stroke={arc.color} strokeWidth={strokeWidth}
@@ -46,69 +51,66 @@ function DonutChart() {
           ))}
         </Svg>
         <View style={styles.donutCenter}>
-          <Text style={styles.donutValue}>1.2k</Text>
-          <Text style={styles.donutLabel}>TOTAL</Text>
+          <Text style={styles.donutValue}>{actualTotal}</Text>
+          <Text style={styles.donutLabel}>{actualTotal === 1 ? 'REPORTE' : 'REPORTES'}</Text>
         </View>
       </View>
       <View style={styles.legendGrid}>
-        {[
-          { color: '#2E7D32', label: 'Aprovechable (35%)' },
-          { color: '#00695C', label: 'Orgánico (30%)' },
-          { color: '#78909C', label: 'No Aprovechable (20%)' },
-          { color: '#C62828', label: 'Peligroso (15%)' },
-        ].map((item) => (
-          <View key={item.label} style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: item.color }]} />
-            <Text style={styles.legendText}>{item.label}</Text>
-          </View>
-        ))}
+        {actualTotal > 0 ? (
+          segments.filter(s => s.pct > 0).map((item) => (
+            <View key={item.label} style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: item.color }]} />
+              <Text style={styles.legendText}>{item.label}</Text>
+            </View>
+          ))
+        ) : (
+          <Text style={{ color: Colors.slate400, fontSize: 12, marginTop: 16 }}>No hay datos registrados</Text>
+        )}
       </View>
     </View>
   );
 }
 
 // ─── Bar Chart ────────────────────────────────────────────────────────────────
-function BarChart() {
-  const data = [
-    { label: 'Zona A', value: 40 },
-    { label: 'Zona B', value: 65 },
-    { label: 'Zona C', value: 92 },
-    { label: 'Zona D', value: 55 },
-  ];
-  const max = 92;
+function BarChart({ data }: { data: Array<{ label: string; value: number }> }) {
+  const max = Math.max(...data.map(d => d.value), 1);
   const chartH = 120;
-  const barW = 36;
-  const gap = 24;
-  const totalW = data.length * (barW + gap) - gap;
+  const barW = 40;
+  const gap = 20;
+  const totalW = data.length * (barW + gap);
 
   return (
-    <View style={{ alignItems: 'center' }}>
-      <Svg width={totalW + 16} height={chartH}>
-        {data.map((item, i) => {
-          const barH = (item.value / max) * chartH;
-          const x = i * (barW + gap) + 8;
-          const y = chartH - barH;
-          const opacity = 0.2 + (item.value / max) * 0.8;
-          return (
-            <Rect key={item.label} x={x} y={y} width={barW} height={barH} rx={6} fill={Colors.primary} fillOpacity={opacity} />
-          );
-        })}
-      </Svg>
-      <View style={[styles.barLabelsRow, { width: totalW + 16 }]}>
-        {data.map((item) => (
-          <View key={item.label} style={{ width: barW + gap, alignItems: 'center' }}>
-            <Text style={styles.barValue}>{item.value}</Text>
-            <Text style={styles.barLabel}>{item.label}</Text>
-          </View>
-        ))}
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: '100%' }}>
+      <View style={{ alignItems: 'center', paddingHorizontal: 16 }}>
+        <Svg width={totalW} height={chartH}>
+          {data.map((item, i) => {
+            const barH = (item.value / max) * (chartH - 20);
+            const x = i * (barW + gap);
+            const y = chartH - barH - 20;
+            const opacity = 0.5 + (item.value / max) * 0.5;
+            return (
+              <Rect key={item.label} x={x} y={y} width={barW} height={barH} rx={4} fill={Colors.primary} fillOpacity={opacity} />
+            );
+          })}
+        </Svg>
+        <View style={[styles.barLabelsRow, { width: totalW }]}>
+          {data.map((item) => (
+            <View key={item.label} style={{ width: barW + gap, alignItems: 'center' }}>
+              <Text style={styles.barValue}>{item.value}</Text>
+              <Text style={styles.barLabel}>{item.label.split(' ')[0]}</Text>
+            </View>
+          ))}
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 // ─── Line Chart ───────────────────────────────────────────────────────────────
-function LineChart() {
-  const points = [30, 10, 25, 15, 28, 12, 20, 18, 25, 10];
+function LineChart({ data }: { data: Array<{ fecha: string; cantidad: number }> }) {
+  if (!data || data.length === 0) return <View style={{ height: 100, justifyContent: 'center' }}><Text>Sin datos</Text></View>;
+  
+  const points = data.map(d => d.cantidad);
   const w = 280;
   const h = 100;
   const padX = 8;
@@ -124,7 +126,9 @@ function LineChart() {
   const polyline = coords.join(' ');
   const firstX = padX;
   const lastX = w - padX;
-  const areaPath = `M${firstX},${h} L${coords[0]} ${coords.slice(1).map((c) => `L${c}`).join(' ')} L${lastX},${h} Z`;
+  const areaPath = coords.length > 1 
+    ? `M${firstX},${h} L${coords[0]} ${coords.slice(1).map((c) => `L${c}`).join(' ')} L${lastX},${h} Z`
+    : `M${firstX},${h} L${firstX},${coords[0].split(',')[1]} L${lastX},${coords[0].split(',')[1]} L${lastX},${h} Z`;
 
   return (
     <View>
@@ -139,20 +143,16 @@ function LineChart() {
         <Polyline points={polyline} fill="none" stroke={Colors.primary} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
       </Svg>
       <View style={styles.lineLabelsRow}>
-        <Text style={styles.lineLabel}>30 días atrás</Text>
-        <Text style={styles.lineLabel}>Hoy</Text>
+        <Text style={styles.lineLabel}>{data[0].fecha}</Text>
+        <Text style={styles.lineLabel}>{data[data.length-1].fecha}</Text>
       </View>
     </View>
   );
 }
 
 // ─── Horizontal Bars ──────────────────────────────────────────────────────────
-function HorizontalBars() {
-  const data = [
-    { label: 'Plástico PET', value: 450, pct: 0.85 },
-    { label: 'Papel/Cartón', value: 320, pct: 0.65 },
-    { label: 'Vidrio', value: 120, pct: 0.30 },
-  ];
+function HorizontalBars({ data }: { data: Array<{ label: string; value: number }> }) {
+  const max = Math.max(...data.map(d => d.value), 1);
   return (
     <View style={styles.hBarsContainer}>
       {data.map((item) => (
@@ -162,10 +162,11 @@ function HorizontalBars() {
             <Text style={styles.hBarValue}>{item.value}</Text>
           </View>
           <View style={styles.hBarTrack}>
-            <View style={[styles.hBarFill, { width: `${item.pct * 100}%` }]} />
+            <View style={[styles.hBarFill, { width: `${(item.value / max) * 100}%` }]} />
           </View>
         </View>
       ))}
+      {data.length === 0 && <Text style={{ textAlign: 'center', color: Colors.slate400 }}>Sin datos de materiales</Text>}
     </View>
   );
 }
@@ -204,6 +205,8 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 export default function AdminHomeScreen() {
   const { logout } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [trends, setTrends] = useState<any[]>([]);
+  const [recentReports, setRecentReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -213,17 +216,16 @@ export default function AdminHomeScreen() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const data = await statsService.getDashboardStats();
-      setStats(data);
+      const [statsData, trendData, reportsData] = await Promise.all([
+        statsService.getDashboardStats(),
+        statsService.getTrendStats(),
+        statsService.getRecentReports()
+      ]);
+      setStats(statsData);
+      setTrends(trendData);
+      setRecentReports(reportsData.slice(0, 5));
     } catch (error) {
-      console.log('Error fetching stats, usando datos de prueba', error);
-      // Usamos datos de prueba si falla la API
-      setStats({
-        total_reports: 1284,
-        active_users: 456,
-        most_active_zone: 'Zona Norte',
-        dangerous_waste_count: 82,
-      });
+      console.log('Error fetching stats:', error);
     } finally {
       setLoading(false);
     }
@@ -248,45 +250,55 @@ export default function AdminHomeScreen() {
         {loading ? (
           <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 24 }} />
         ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.kpiRow}>
-            <View style={styles.kpiCard}>
-              <Text style={styles.kpiLabel}>Total Reportes</Text>
-              <Text style={styles.kpiValue}>{stats?.total_reports}</Text>
-            </View>
-            <View style={styles.kpiCard}>
-              <Text style={styles.kpiLabel}>Usuarios Activos</Text>
-              <Text style={styles.kpiValue}>{stats?.active_users}</Text>
-            </View>
-            <View style={styles.kpiCard}>
-              <Text style={styles.kpiLabel}>Más Actividad</Text>
-              <Text style={styles.kpiValue}>{stats?.most_active_zone}</Text>
-            </View>
-            <View style={[styles.kpiCard, styles.kpiCardDanger]}>
-              <Text style={styles.kpiLabelDanger}>Res. Peligrosos</Text>
-              <Text style={styles.kpiValueDanger}>{stats?.dangerous_waste_count}</Text>
-            </View>
-          </ScrollView>
+          <>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.kpiRow}>
+              <View style={styles.kpiCard}>
+                <Text style={styles.kpiLabel}>Total Reportes</Text>
+                <Text style={styles.kpiValue}>{stats?.total_reportes || 0}</Text>
+              </View>
+              <View style={styles.kpiCard}>
+                <Text style={styles.kpiLabel}>Usuarios Activos</Text>
+                <Text style={styles.kpiValue}>{stats?.usuarios_activos || 0}</Text>
+              </View>
+            </ScrollView>
+
+            <ChartCard title="Distribución por Tipo de Residuo">
+              <DonutChart data={stats?.distribucion_tipos || []} />
+            </ChartCard>
+            
+            <ChartCard title="Reportes por Zona del Campus">
+              <BarChart data={stats?.distribucion_zonas || []} />
+            </ChartCard>
+          </>
         )}
 
-        <ChartCard title="Distribución por Tipo de Residuo"><DonutChart /></ChartCard>
-        <ChartCard title="Reportes por Zona del Campus"><BarChart /></ChartCard>
-        <ChartCard title="Tendencia de Reportes (30d)"><LineChart /></ChartCard>
-        <ChartCard title="Materiales más Reportados"><HorizontalBars /></ChartCard>
+        <ChartCard title="Tendencia de Reportes (Últimos 30d)">
+          <LineChart data={trends} />
+        </ChartCard>
+        
+        <ChartCard title="Materiales más Reportados">
+          <HorizontalBars data={stats?.distribucion_materiales || []} />
+        </ChartCard>
 
         <View style={styles.chartCard}>
           <View style={styles.chartCardHeader}>
             <Text style={styles.chartCardTitle}>Reportes recientes</Text>
           </View>
           <View style={styles.recentList}>
-            <RecentReportRow type="Aprovechable" location="Zona Central - Bloque L" time="Hoy, 14:30" />
-            <View style={styles.recentDivider} />
-            <RecentReportRow type="Peligroso" location="Laboratorio Química" time="Hoy, 12:15" />
-            <View style={styles.recentDivider} />
-            <RecentReportRow type="Orgánico" location="Comedor Estudiantil" time="Ayer, 18:45" />
-            <View style={styles.recentDivider} />
-            <RecentReportRow type="No Aprovechable" location="Zona Deportiva" time="Ayer, 10:20" />
-            <View style={styles.recentDivider} />
-            <RecentReportRow type="Aprovechable" location="Biblioteca General" time="22 Oct, 09:00" />
+            {recentReports.length > 0 ? (
+              recentReports.map((report, idx) => (
+                <React.Fragment key={report.id || idx}>
+                  <RecentReportRow 
+                    type={report.tipo_residuo || 'No Aprovechable'} 
+                    location={report.zona || 'Ubicación desconocida'} 
+                    time={new Date(report.fecha_reporte).toLocaleDateString()} 
+                  />
+                  {idx < recentReports.length - 1 && <View style={styles.recentDivider} />}
+                </React.Fragment>
+              ))
+            ) : (
+              <Text style={{ padding: 16, textAlign: 'center', color: Colors.slate400 }}>No hay reportes recientes</Text>
+            )}
           </View>
         </View>
 

@@ -1,21 +1,28 @@
 import api from './base_service';
 
 export interface DashboardStats {
-  total_reports: number;
-  active_users: number;
-  most_active_zone: string;
-  dangerous_waste_count: number;
+  total_reportes: number;
+  usuarios_activos: number;
+  distribucion_tipos: Array<{ label: string; value: number }>;
+  distribucion_zonas: Array<{ label: string; value: number }>;
+  distribucion_materiales: Array<{ label: string; value: number }>;
 }
 
 export const statsService = {
   getDashboardStats: async (): Promise<DashboardStats> => {
-    // Aquí usamos el endpoint del backend (asegurarse de que coincide en FastAPI)
-    const response = await api.get('/api/v1/stats/dashboard'); 
+    // Rutas directas de FastAPI
+    const response = await api.get('/stats/dashboard'); 
     return response.data;
   },
 
   getRecentReports: async () => {
-    const response = await api.get('/api/v1/waste/recent');
+    // Ruta directa
+    const response = await api.get('/reportes/');
+    return response.data;
+  },
+
+  getTrendStats: async () => {
+    const response = await api.get('/stats/tendencia');
     return response.data;
   }
 };
