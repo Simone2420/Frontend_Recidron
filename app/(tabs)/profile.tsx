@@ -16,27 +16,40 @@ export default function ProfileScreen() {
   const [editPassword, setEditPassword] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const [reportCount, setReportCount] = useState('0');
+  const [memberSince, setMemberSince] = useState('...');
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileData = async () => {
       try {
         const profile = await userService.getProfile();
-        setEditName(profile.nombre || 'Usuario'); // Cambiado full_name -> nombre
+        setEditName(profile.nombre || 'Usuario');
         setEditEmail(profile.email || user?.email || '');
+        
+        if (profile.creado_en) {
+          const date = new Date(profile.creado_en);
+          setMemberSince(date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }));
+        }
+
+        const dashboard = await userService.getUserDashboard();
+        if (dashboard && dashboard.stats && dashboard.stats.length > 0) {
+          // Buscamos el valor de "Mis Reportes"
+          const totalStat = dashboard.stats.find((s: any) => s.title === "Mis Reportes");
+          if (totalStat) setReportCount(totalStat.value);
+        }
       } catch (err) {
-        console.log('Error o sin endpoint de perfil:', err);
+        console.log('Error al cargar perfil o stats:', err);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchProfile();
+    fetchProfileData();
   }, [user]);
 
   const userName = editName || user?.nombre || 'Usuario';
   const userInitials = userName.substring(0, 2).toUpperCase();
-  const userRole = user?.role === 'admin' ? 'Administrador' : 'Estudiante'; // Cambiado Invitado -> Estudiante
-  const reportCount = 128; // Vendría idealmente de los stats
-  const memberSince = 'Hoy'; // Se puede mejorar con la fecha de creacion
+  const userRole = user?.role === 'admin' ? 'Administrador' : 'Estudiante'; 
 
   const handleSave = async () => {
     setIsSaving(true);

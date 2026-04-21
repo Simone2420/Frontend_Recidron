@@ -7,6 +7,7 @@ export interface UserProfile {
   codigo_estudiantil?: string;
   rol_id?: number | string;
   nombre_rol?: string;
+  creado_en?: string;
 }
 
 export const userService = {

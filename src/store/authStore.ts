@@ -3,6 +3,7 @@ import { create } from 'zustand';
 type Role = 'admin' | 'user' | null;
 
 interface AuthUser {
+  id: number;
   email: string;
   nombre: string;
   role: Role;
@@ -28,6 +29,7 @@ export const useAuth = create<AuthState>((set) => ({
       // El backend devuelve el nombre del rol (admin/autor)
       const role: Role = data.rol === 'admin' ? 'admin' : 'user';
       const userData: AuthUser = {
+        id: data.id,
         email: data.email,
         nombre: data.nombre,
         role,

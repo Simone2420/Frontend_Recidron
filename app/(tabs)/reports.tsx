@@ -19,7 +19,7 @@ const MOCK_REPORTS: WasteReport[] = [
 export default function ReportsScreen() {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('Todos');
-  const [reports, setReports] = useState<WasteReport[]>([]);
+  const [reports, setReports] = useState<any[]>([]); // Usamos any temporalmente para las nuevas propiedades del back
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -30,21 +30,24 @@ export default function ReportsScreen() {
     setIsLoading(true);
     try {
       const data = await wasteService.getAllReports();
-      setReports(data && data.length > 0 ? data : MOCK_REPORTS);
+      setReports(data || []);
     } catch (e) {
       console.error('Error fetching reports:', e);
-      setReports(MOCK_REPORTS);
+      setReports([]); // No mostramos mock por defecto si el usuario prefiere ver la realidad
     } finally {
       setIsLoading(false);
     }
   };
 
   const filteredReports = reports.filter((report) => {
-    const matchesFilter = activeFilter === 'Todos' || report.type === activeFilter;
+    // Ajustamos filtros a los nuevos nombres del backend
+    const typeLabel = report.tipo_nombre || 'General';
+    const matchesFilter = activeFilter === 'Todos' || typeLabel === activeFilter;
     const matchesSearch =
       search === '' ||
-      report.location.toLowerCase().includes(search.toLowerCase()) ||
-      report.material.toLowerCase().includes(search.toLowerCase());
+      (report.zona_nombre || '').toLowerCase().includes(search.toLowerCase()) ||
+      (report.material_nombre || '').toLowerCase().includes(search.toLowerCase()) ||
+      (report.descripcion || '').toLowerCase().includes(search.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -63,7 +66,7 @@ export default function ReportsScreen() {
           <MaterialIcons name="search" size={22} color={Colors.primary} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar reportes por zona..."
+            placeholder="Buscar por zona o material..."
             placeholderTextColor={Colors.slate400}
             value={search}
             onChangeText={setSearch}
@@ -94,7 +97,7 @@ export default function ReportsScreen() {
 
       <View style={styles.resultsRow}>
         <Text style={styles.resultsText}>
-          {filteredReports.length} reporte{filteredReports.length !== 1 ? 's' : ''}
+          {filteredReports.length} reporte{filteredReports.length !== 1 ? 's' : ''} encontrados
         </Text>
       </View>
 
@@ -108,16 +111,17 @@ export default function ReportsScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <MaterialIcons name="search-off" size={48} color={Colors.slate200} />
-              <Text style={styles.emptyText}>No se encontraron reportes</Text>
+              <MaterialIcons name="inventory" size={48} color={Colors.slate200} />
+              <Text style={styles.emptyText}>Aún no se han registrado reportes.</Text>
+              <Text style={styles.emptySubText}>¡Sé el primero en reportar un residuo!</Text>
             </View>
           }
           renderItem={({ item }) => (
             <ReportCard
-              type={item.type as any}
-              location={item.location}
-              material={item.material}
-              dateStr={item.dateStr || 'Recientemente'}
+              type={item.tipo_nombre as any}
+              location={item.zona_nombre}
+              material={item.material_nombre}
+              dateStr={item.fecha_reporte ? new Date(item.fecha_reporte).toLocaleDateString() : 'Recientemente'}
               onPress={() => router.push({ pathname: '/report-detail', params: { id: item.id } })}
             />
           )}

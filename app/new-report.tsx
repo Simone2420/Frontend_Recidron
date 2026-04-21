@@ -1,26 +1,56 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import Animated, { FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { Button, InputField } from '../src/components/ui';
 import { Colors, WasteColors } from '../src/styles/colors';
-import { wasteService } from '../src/services/waste_service';
-
-type CategoryType = keyof typeof WasteColors;
-type SizeType = 'Leve' | 'Mediano (2-5kg)' | 'Crítico';
+import { wasteService, WasteCatalogItem } from '../src/services/waste_service';
+import { useAuth } from '../src/store/authStore';
 
 export default function NewReportScreen() {
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form State
-  const [category, setCategory] = useState<CategoryType | null>(null);
-  const [material, setMaterial] = useState('');
-  const [zone, setZone] = useState('');
-  const [exactPoint, setExactPoint] = useState('');
-  const [size, setSize] = useState<SizeType | null>(null);
+  // Catalogs from Backend
+  const [types, setTypes] = useState<WasteCatalogItem[]>([]);
+  const [materials, setMaterials] = useState<WasteCatalogItem[]>([]);
+  const [zones, setZones] = useState<WasteCatalogItem[]>([]);
+  const [sizes, setSizes] = useState<WasteCatalogItem[]>([]);
+
+  // Form State (using IDs)
+  const [selectedType, setSelectedType] = useState<number | null>(null);
+  const [selectedMaterial, setSelectedMaterial] = useState<number | null>(null);
+  const [selectedZone, setSelectedZone] = useState<number | null>(null);
+  const [selectedSize, setSelectedSize] = useState<number | null>(null);
+  const [description, setDescription] = useState('');
   const [photoTaken, setPhotoTaken] = useState(false);
+
+  useEffect(() => {
+    loadCatalogs();
+  }, []);
+
+  const loadCatalogs = async () => {
+    setIsLoading(true);
+    try {
+      const [t, m, z, s] = await Promise.all([
+        wasteService.getTypes(),
+        wasteService.getMaterials(),
+        wasteService.getZones(),
+        wasteService.getSizes(),
+      ]);
+      setTypes(t);
+      setMaterials(m);
+      setZones(z);
+      setSizes(s);
+    } catch (error) {
+      console.error('Error loading catalogs:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleNext = () => {
     if (step < 3) setStep(step + 1);
@@ -32,21 +62,26 @@ export default function NewReportScreen() {
   };
 
   const handleSubmit = async () => {
+    if (!user?.id || !selectedType || !selectedMaterial || !selectedZone || !selectedSize) {
+      alert('Por favor completa todos los campos obligatorios.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await wasteService.createReport({
-        type: category || 'General',
-        material: material || size || 'No especificado',
-        location: `${zone} - ${exactPoint}`,
-        photo_url: photoTaken ? 'foto_tomada_localmente.jpg' : ''
+        usuario_id: user.id,
+        tipo_residuo_id: selectedType,
+        material_id: selectedMaterial,
+        zona_id: selectedZone,
+        tamano_id: selectedSize,
+        descripcion: description,
       });
       setIsSubmitting(false);
       router.replace('/(tabs)/reports');
     } catch (error) {
       console.error('Error al crear reporte:', error);
       setIsSubmitting(false);
-      // Para no trabar al usuario si falla la conexión en modo test
-      router.replace('/(tabs)/reports');
     }
   };
 
@@ -63,59 +98,76 @@ export default function NewReportScreen() {
     </View>
   );
 
+  const renderCatalogList = (items: WasteCatalogItem[], selectedId: number | null, onSelect: (id: number) => void, fieldName: string) => {
+    if (items.length === 0) {
+      return <Text style={styles.emptyCatalogText}>No hay {fieldName} registrados. Reinicia el servidor o contacta al admin.</Text>;
+    }
+
+    const isType = fieldName === "tipos";
+
+    return (
+      <View style={isType ? styles.categoryGrid : styles.catalogGrid}>
+        {items.map((item) => {
+          const name = item.nombre_tipo || item.nombre_material || item.nombre_zona || item.nombre_tamano || '';
+          const isSelected = selectedId === item.id;
+          const colorSet = isType ? (WasteColors[name] || { bg: Colors.slate100, text: Colors.slate700 }) : null;
+
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={[
+                isType ? styles.categoryCard : styles.catalogCard,
+                isSelected && (isType ? { borderColor: colorSet?.text, backgroundColor: colorSet?.bg } : styles.catalogCardActive)
+              ]}
+              onPress={() => onSelect(item.id)}
+              activeOpacity={0.7}
+            >
+              {isType && (
+                <View style={[styles.categoryColorDot, { backgroundColor: colorSet?.text || Colors.slate400 }]} />
+              )}
+              <Text style={[
+                isType ? styles.categoryCardText : styles.catalogCardText, 
+                isSelected && (isType ? { fontWeight: 'bold', color: colorSet?.text } : styles.catalogCardTextActive)
+              ]}>
+                {name}
+              </Text>
+              {!isType && isSelected && <MaterialIcons name="check-circle" size={16} color={Colors.primary} />}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  };
+
   const renderStep1 = () => (
     <Animated.View entering={FadeInRight} exiting={FadeInLeft} style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Clasificación del Residuo</Text>
-      <Text style={styles.stepSubtitle}>Selecciona la categoría principal de la basura encontrada.</Text>
+      <Text style={styles.stepTitle}>Clasificación</Text>
+      <Text style={styles.stepSubtitle}>Selecciona el tipo de residuo y el material principal.</Text>
 
-      <View style={styles.categoryGrid}>
-        {(Object.keys(WasteColors) as CategoryType[]).map((cat) => (
-          <TouchableOpacity
-            key={cat}
-            style={[
-              styles.categoryCard,
-              category === cat && { borderColor: WasteColors[cat].primary, backgroundColor: WasteColors[cat].bg }
-            ]}
-            onPress={() => setCategory(cat)}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.categoryColorDot, { backgroundColor: WasteColors[cat].primary }]} />
-            <Text style={[styles.categoryCardText, category === cat && { fontWeight: 'bold' }]}>{cat}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <Text style={styles.inputLabelLabel}>Tipo de Residuo</Text>
+      {renderCatalogList(types, selectedType, setSelectedType, "tipos")}
 
-      <View style={{ marginTop: 24 }}>
-        <InputField
-          label="Material Específico (Opcional)"
-          placeholder="Ej: Plástico PET, Cartón, Servilletas..."
-          icon="recycling"
-          value={material}
-          onChangeText={setMaterial}
-        />
-      </View>
+      <Text style={[styles.inputLabelLabel, { marginTop: 20 }]}>Material</Text>
+      {renderCatalogList(materials, selectedMaterial, setSelectedMaterial, "materiales")}
     </Animated.View>
   );
 
   const renderStep2 = () => (
     <Animated.View entering={FadeInRight} exiting={FadeInLeft} style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Ubicación Geográfica</Text>
-      <Text style={styles.stepSubtitle}>Indica exactamente dónde se encuentra la acumulación.</Text>
+      <Text style={styles.stepTitle}>Ubicación</Text>
+      <Text style={styles.stepSubtitle}>Indica dónde se encuentra y añade una descripción.</Text>
 
-      <View style={{ marginTop: 16 }}>
+      <Text style={styles.inputLabelLabel}>Zona del Campus</Text>
+      {renderCatalogList(zones, selectedZone, setSelectedZone, "zonas")}
+
+      <View style={{ marginTop: 24 }}>
         <InputField
-          label="Zona Principal"
-          placeholder="Ej. Biblioteca General, Zona Norte"
-          icon="place"
-          value={zone}
-          onChangeText={setZone}
-        />
-        <InputField
-          label="Punto Exacto o Sub-Sector"
-          placeholder="Ej. Atrás de la facultad, Cuadrante B12"
+          label="Descripción o Punto Exacto"
+          placeholder="Ej: Bajando las escaleras, junto al bote rojo..."
           icon="explore"
-          value={exactPoint}
-          onChangeText={setExactPoint}
+          value={description}
+          onChangeText={setDescription}
+          multiline
         />
       </View>
     </Animated.View>
@@ -123,23 +175,23 @@ export default function NewReportScreen() {
 
   const renderStep3 = () => (
     <Animated.View entering={FadeInRight} exiting={FadeInLeft} style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Toma de Evidencia</Text>
-      <Text style={styles.stepSubtitle}>Fundamental para que las brigadas identifiquen la magnitud.</Text>
+      <Text style={styles.stepTitle}>Evidencia</Text>
+      <Text style={styles.stepSubtitle}>Selecciona el volumen estimado y toma una foto.</Text>
 
-      <View style={{ marginTop: 16, marginBottom: 24 }}>
-        <Text style={styles.inputLabelLabel}>Tamaño Estimado</Text>
-        <View style={styles.chipsRow}>
-          {['Leve', 'Mediano (2-5kg)', 'Crítico'].map((s) => (
-            <TouchableOpacity
-              key={s}
-              style={[styles.sizeChip, size === s && styles.sizeChipActive]}
-              onPress={() => setSize(s as SizeType)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.sizeChipText, size === s && styles.sizeChipTextActive]}>{s}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+      <Text style={styles.inputLabelLabel}>Tamaño Estimado</Text>
+      <View style={styles.chipsRow}>
+        {sizes.map((s) => (
+          <TouchableOpacity
+            key={s.id}
+            style={[styles.sizeChip, selectedSize === s.id && styles.sizeChipActive]}
+            onPress={() => setSelectedSize(s.id)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.sizeChipText, selectedSize === s.id && styles.sizeChipTextActive]}>
+              {s.nombre_tamano}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <TouchableOpacity 
@@ -155,14 +207,21 @@ export default function NewReportScreen() {
         <Text style={[styles.cameraText, photoTaken && { color: Colors.white, fontWeight: 'bold' }]}>
           {photoTaken ? "¡Evidencia Capturada!" : "Abrir Cámara Nativa"}
         </Text>
-        {!photoTaken && <Text style={styles.cameraSubText}>Se usará tu GPS local (EXIF)</Text>}
       </TouchableOpacity>
     </Animated.View>
   );
 
+  if (isLoading) {
+    return (
+      <View style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={{ marginTop: 12, color: Colors.slate500 }}>Sincronizando con el servidor...</Text>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerBtn} onPress={handleBack}>
           <MaterialIcons name="close" size={24} color={Colors.slate900} />
@@ -184,7 +243,6 @@ export default function NewReportScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Footer Nav */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.footerBackBtn} onPress={handleBack}>
           <Text style={styles.footerBackText}>{step === 1 ? 'Cancelar' : 'Atrás'}</Text>
@@ -210,198 +268,45 @@ export default function NewReportScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.backgroundLight,
-  },
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: Colors.backgroundLight,
-  },
-  headerBtn: {
-    width: 40,
-    height: 40,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.slate900,
-  },
-  stepIndicatorContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 16,
-    backgroundColor: Colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.slate200,
-  },
-  stepCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.slate200,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepCircleActive: {
-    backgroundColor: Colors.primary,
-  },
-  stepNumber: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: Colors.slate500,
-  },
-  stepNumberActive: {
-    color: Colors.white,
-  },
-  stepLine: {
-    width: 40,
-    height: 2,
-    backgroundColor: Colors.slate200,
-    marginHorizontal: 8,
-  },
-  stepLineActive: {
-    backgroundColor: Colors.primary,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 32,
-  },
-  stepContainer: {
-    flex: 1,
-  },
-  stepTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.slate900,
-    marginBottom: 8,
-  },
-  stepSubtitle: {
-    fontSize: 15,
-    color: Colors.slate500,
-    marginBottom: 24,
-    lineHeight: 22,
-  },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  categoryCard: {
-    width: '48%',
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: Colors.white,
-    borderWidth: 2,
-    borderColor: Colors.slate200,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  categoryColorDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  categoryCardText: {
-    fontSize: 13,
-    color: Colors.slate700,
-    flex: 1,
-  },
-  inputLabelLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.slate800,
-    marginBottom: 8,
-    paddingHorizontal: 4,
-  },
-  chipsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  sizeChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: Colors.white,
-    borderWidth: 1,
-    borderColor: Colors.slate300,
-    borderRadius: 999,
-  },
-  sizeChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  sizeChipText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.slate600,
-  },
-  sizeChipTextActive: {
-    color: Colors.white,
-    fontWeight: 'bold',
-  },
-  cameraBox: {
-    height: 200,
-    backgroundColor: Colors.slate100,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: Colors.slate300,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-    gap: 8,
-  },
-  cameraBoxSuccess: {
-    backgroundColor: '#059669', // Verde éxito
-    borderColor: '#059669',
-    borderStyle: 'solid',
-  },
-  cameraText: {
-    fontSize: 16,
-    color: Colors.slate600,
-    marginTop: 8,
-  },
-  cameraSubText: {
-    fontSize: 13,
-    color: Colors.slate400,
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: Colors.white,
-    borderTopWidth: 1,
-    borderTopColor: Colors.slate200,
-  },
-  footerBackBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  footerBackText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: Colors.slate600,
-  },
-  footerNextBtn: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  footerSubmitBtn: {
-    flex: 1,
-    marginLeft: 16,
-    backgroundColor: '#059669', // Un verde para que sienta que "Terminó"
-  },
+  safeArea: { flex: 1, backgroundColor: Colors.backgroundLight },
+  container: { flex: 1 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
+  headerBtn: { width: 40, height: 40, alignItems: 'flex-start', justifyContent: 'center' },
+  headerTitle: { fontSize: 18, fontWeight: 'bold', color: Colors.slate900 },
+  stepIndicatorContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 16, backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.slate200 },
+  stepCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.slate200, alignItems: 'center', justifyContent: 'center' },
+  stepCircleActive: { backgroundColor: Colors.primary },
+  stepNumber: { fontSize: 14, fontWeight: 'bold', color: Colors.slate500 },
+  stepNumberActive: { color: Colors.white },
+  stepLine: { width: 40, height: 2, backgroundColor: Colors.slate200, marginHorizontal: 8 },
+  stepLineActive: { backgroundColor: Colors.primary },
+  scrollContent: { flexGrow: 1, paddingHorizontal: 24, paddingVertical: 24 },
+  stepContainer: { flex: 1 },
+  stepTitle: { fontSize: 24, fontWeight: 'bold', color: Colors.slate900, marginBottom: 4 },
+  stepSubtitle: { fontSize: 14, color: Colors.slate500, marginBottom: 24 },
+  inputLabelLabel: { fontSize: 14, fontWeight: '600', color: Colors.slate800, marginBottom: 12 },
+  catalogGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  catalogCard: { paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.slate200, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  catalogCardActive: { borderColor: Colors.primary, backgroundColor: Colors.primaryLight },
+  catalogCardText: { fontSize: 13, color: Colors.slate700 },
+  catalogCardTextActive: { color: Colors.primary, fontWeight: 'bold' },
+  emptyCatalogText: { fontSize: 13, color: Colors.danger, fontStyle: 'italic', marginBottom: 12 },
+  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  sizeChip: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.slate300, borderRadius: 12 },
+  sizeChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  sizeChipText: { fontSize: 14, color: Colors.slate600 },
+  sizeChipTextActive: { color: Colors.white, fontWeight: 'bold' },
+  cameraBox: { height: 160, backgroundColor: Colors.slate100, borderRadius: 16, borderWidth: 2, borderColor: Colors.slate300, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', marginTop: 16, gap: 8 },
+  cameraBoxSuccess: { backgroundColor: '#059669', borderColor: '#059669', borderStyle: 'solid' },
+  cameraText: { fontSize: 15, color: Colors.slate600 },
+  footer: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: Colors.white, borderTopWidth: 1, borderTopColor: Colors.slate200 },
+  footerBackBtn: { paddingVertical: 12, paddingHorizontal: 16 },
+  footerBackText: { fontSize: 15, fontWeight: '600', color: Colors.slate600 },
+  footerNextBtn: { flex: 1, marginLeft: 16 },
+  footerSubmitBtn: { flex: 1, marginLeft: 16, backgroundColor: '#059669' },
+  // Category Specific Styles
+  categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 8 },
+  categoryCard: { width: '48%', padding: 16, borderRadius: 12, backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.slate200, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  categoryCardText: { fontSize: 13, color: Colors.slate700, flex: 1 },
+  categoryColorDot: { width: 10, height: 10, borderRadius: 5 },
 });
