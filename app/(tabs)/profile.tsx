@@ -1,34 +1,61 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { KeyboardAvoidingView, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { useAuth } from '../../src/store/authStore';
 import { Colors } from '../../src/styles/colors';
 import { Button, InputField } from '../../src/components/ui';
+import { userService } from '../../src/services/user_service';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
 
   const [isEditVisible, setIsEditVisible] = useState(false);
-  const [editName, setEditName] = useState('Usuario de Prueba');
+  const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState(user?.email || '');
   const [editPassword, setEditPassword] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const userName = editName;
-  const userInitials = 'CP';
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const profile = await userService.getProfile();
+        setEditName(profile.full_name || 'Usuario');
+        setEditEmail(profile.email || user?.email || '');
+      } catch (err) {
+        console.log('Error o sin endpoint de perfil:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProfile();
+  }, [user]);
+
+  const userName = editName || 'Usuario';
+  const userInitials = userName.substring(0, 2).toUpperCase();
   const userRole = user?.role === 'admin' ? 'Administrador' : 'Invitado';
-  const reportCount = 128;
-  const memberSince = 'Oct 2023';
+  const reportCount = 128; // Vendría idealmente de los stats
+  const memberSince = 'Hoy'; // Se puede mejorar con la fecha de creacion
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    // Simula petición al backend
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      const dataToUpdate: any = {
+        full_name: editName,
+        email: editEmail
+      };
+      if (editPassword) {
+        dataToUpdate.password = editPassword;
+      }
+      await userService.updateProfile(dataToUpdate);
       setIsEditVisible(false);
-      setEditPassword(''); // Vaciamos por seguridad al cerrar
-    }, 1200);
+      setEditPassword(''); 
+    } catch (err) {
+      console.error('Error actualizando perfil', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const isPasswordWeak = editPassword.length > 0 && editPassword.length < 8;
@@ -52,13 +79,17 @@ export default function ProfileScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.profileSection}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarText}>{userInitials}</Text>
-          </View>
-          <Text style={styles.userName}>{userName}</Text>
-          <Text style={styles.userEmail}>{user?.email ?? ''}</Text>
-        </View>
+        {isLoading ? (
+          <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 60 }} />
+        ) : (
+          <>
+            <View style={styles.profileSection}>
+              <View style={styles.avatarCircle}>
+                <Text style={styles.avatarText}>{userInitials}</Text>
+              </View>
+              <Text style={styles.userName}>{userName}</Text>
+              <Text style={styles.userEmail}>{editEmail}</Text>
+            </View>
 
         <View style={styles.badgeRow}>
           <View style={styles.roleBadge}>
@@ -116,6 +147,8 @@ export default function ProfileScreen() {
         </View>
 
         <View style={{ height: 32 }} />
+          </>
+        )}
       </ScrollView>
 
       {/* BOTTOM SHEET: Editar Perfil */}
