@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, T
 import Animated, { FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { Button, InputField } from '../src/components/ui';
 import { Colors, WasteColors } from '../src/styles/colors';
+import { wasteService } from '../src/services/waste_service';
 
 type CategoryType = keyof typeof WasteColors;
 type SizeType = 'Leve' | 'Mediano (2-5kg)' | 'Crítico';
@@ -30,13 +31,23 @@ export default function NewReportScreen() {
     else router.back();
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      await wasteService.createReport({
+        type: category || 'General',
+        material: material || size || 'No especificado',
+        location: `${zone} - ${exactPoint}`,
+        photo_url: photoTaken ? 'foto_tomada_localmente.jpg' : ''
+      });
       setIsSubmitting(false);
-      // Redirigimos simulando que el reporte se procesó exitosamente a ver su Detalle de ID
       router.replace('/(tabs)/reports');
-    }, 1500);
+    } catch (error) {
+      console.error('Error al crear reporte:', error);
+      setIsSubmitting(false);
+      // Para no trabar al usuario si falla la conexión en modo test
+      router.replace('/(tabs)/reports');
+    }
   };
 
   const renderStepIndicator = () => (

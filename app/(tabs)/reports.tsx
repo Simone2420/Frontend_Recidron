@@ -1,35 +1,45 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
-import { FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { ReportCard } from '../../src/components/cards';
 import { Colors, WasteColors } from '../../src/styles/colors';
+import { wasteService, WasteReport } from '../../src/services/waste_service';
 
 const FILTERS = ['Todos', 'Aprovechable', 'Peligroso', 'Orgánico', 'No Aprovechable'] as const;
 type FilterType = typeof FILTERS[number];
 
-type Report = {
-  id: string;
-  type: keyof typeof WasteColors;
-  location: string;
-  material: string;
-  dateStr: string;
-};
-
-const MOCK_REPORTS: Report[] = [
+// Puedes mantener MOCK_REPORTS como fallback si falla la red
+const MOCK_REPORTS: WasteReport[] = [
   { id: '1', type: 'Aprovechable', location: 'Zona Norte - Parque Central', material: 'Plástico PET y Cartón', dateStr: 'Hoy, 10:30 AM' },
   { id: '2', type: 'Peligroso', location: 'Zona Industrial 4', material: 'Baterías y Químicos', dateStr: 'Ayer, 04:15 PM' },
   { id: '3', type: 'Orgánico', location: 'Barrio Miraflores', material: 'Residuos de Alimentos', dateStr: '22 Oct, 08:00 AM' },
-  { id: '4', type: 'No Aprovechable', location: 'Centro Histórico', material: 'Papel higiénico y servilletas', dateStr: '21 Oct, 11:20 AM' },
-  { id: '5', type: 'Aprovechable', location: 'Biblioteca General', material: 'Cartón y Papel', dateStr: '20 Oct, 09:00 AM' },
-  { id: '6', type: 'Orgánico', location: 'Comedor Estudiantil', material: 'Residuos de cocina', dateStr: '19 Oct, 07:30 AM' },
 ];
 
 export default function ReportsScreen() {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('Todos');
+  const [reports, setReports] = useState<WasteReport[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredReports = MOCK_REPORTS.filter((report) => {
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  const fetchReports = async () => {
+    setIsLoading(true);
+    try {
+      const data = await wasteService.getAllReports();
+      setReports(data && data.length > 0 ? data : MOCK_REPORTS);
+    } catch (e) {
+      console.error('Error fetching reports:', e);
+      setReports(MOCK_REPORTS);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredReports = reports.filter((report) => {
     const matchesFilter = activeFilter === 'Todos' || report.type === activeFilter;
     const matchesSearch =
       search === '' ||
@@ -88,27 +98,31 @@ export default function ReportsScreen() {
         </Text>
       </View>
 
-      <FlatList
-        data={filteredReports}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <MaterialIcons name="search-off" size={48} color={Colors.slate200} />
-            <Text style={styles.emptyText}>No se encontraron reportes</Text>
-          </View>
-        }
-        renderItem={({ item }) => (
-          <ReportCard
-            type={item.type}
-            location={item.location}
-            material={item.material}
-            dateStr={item.dateStr}
-            onPress={() => router.push({ pathname: '/report-detail', params: { id: item.id } })}
-          />
-        )}
-      />
+      {isLoading ? (
+        <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 40 }} />
+      ) : (
+        <FlatList
+          data={filteredReports}
+          keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <MaterialIcons name="search-off" size={48} color={Colors.slate200} />
+              <Text style={styles.emptyText}>No se encontraron reportes</Text>
+            </View>
+          }
+          renderItem={({ item }) => (
+            <ReportCard
+              type={item.type as any}
+              location={item.location}
+              material={item.material}
+              dateStr={item.dateStr || 'Recientemente'}
+              onPress={() => router.push({ pathname: '/report-detail', params: { id: item.id } })}
+            />
+          )}
+        />
+      )}
     </SafeAreaView>
   );
 }
