@@ -20,6 +20,10 @@ export default function UserHomeScreen() {
   const [stats, setStats] = useState(FALLBACK_STATS);
   const [loading, setLoading] = useState(true);
 
+  // Definimos el nombre para el saludo (si no hay nombre, usa el email o 'Usuario')
+  const userName = user?.nombre || user?.email?.split('@')[0] || 'Usuario';
+  const userInitials = userName.substring(0, 2).toUpperCase();
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);

@@ -4,7 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 const api = axios.create({
   // URL local de tu servidor FastAPI (basada en tu IP actual 192.168.0.7)
   baseURL: 'http://192.168.0.7:3000',
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -15,8 +15,9 @@ const api = axios.create({
 api.interceptors.request.use(async (config) => {
   try {
     const token = await SecureStore.getItemAsync('user_token');
+    console.log(`[API] Petición a: ${config.baseURL}${config.url} | Token: ${token ? 'SÍ' : 'NO'}`);
+    
     if (token) {
-      // Inyectar el token en el formato Bearer esperado por el Backend
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
