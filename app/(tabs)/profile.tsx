@@ -21,7 +21,7 @@ export default function ProfileScreen() {
     const fetchProfile = async () => {
       try {
         const profile = await userService.getProfile();
-        setEditName(profile.full_name || 'Usuario');
+        setEditName(profile.nombre || 'Usuario'); // Cambiado full_name -> nombre
         setEditEmail(profile.email || user?.email || '');
       } catch (err) {
         console.log('Error o sin endpoint de perfil:', err);
@@ -32,9 +32,9 @@ export default function ProfileScreen() {
     fetchProfile();
   }, [user]);
 
-  const userName = editName || 'Usuario';
+  const userName = editName || user?.nombre || 'Usuario';
   const userInitials = userName.substring(0, 2).toUpperCase();
-  const userRole = user?.role === 'admin' ? 'Administrador' : 'Invitado';
+  const userRole = user?.role === 'admin' ? 'Administrador' : 'Estudiante'; // Cambiado Invitado -> Estudiante
   const reportCount = 128; // Vendría idealmente de los stats
   const memberSince = 'Hoy'; // Se puede mejorar con la fecha de creacion
 
@@ -42,13 +42,17 @@ export default function ProfileScreen() {
     setIsSaving(true);
     try {
       const dataToUpdate: any = {
-        full_name: editName,
+        nombre: editName, // Cambiado full_name -> nombre
         email: editEmail
       };
       if (editPassword) {
         dataToUpdate.password = editPassword;
       }
       await userService.updateProfile(dataToUpdate);
+      
+      // Actualizar el estado global del store si el nombre cambió
+      setUser({ ...user!, nombre: editName, email: editEmail });
+      
       setIsEditVisible(false);
       setEditPassword(''); 
     } catch (err) {

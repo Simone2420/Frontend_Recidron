@@ -52,7 +52,7 @@ export default function UserHomeScreen() {
           <View>
             <Text style={styles.welcomeText}>Bienvenido de vuelta</Text>
             <Text style={styles.greetingText}>
-              Hola, <Text style={styles.greetingName}>{user?.email?.split('@')[0] || 'Usuario'}</Text>
+              Hola, <Text style={styles.greetingName}>{userName}</Text>
             </Text>
           </View>
         </Animated.View>

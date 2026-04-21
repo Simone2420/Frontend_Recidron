@@ -27,6 +27,7 @@ export default function RegisterScreen() {
 
     try {
       // Mandar los datos que coincide con la estructura de un usuario (ajusta las propiedades en base a tu backend)
+      // El authService ya mapea full_name -> nombre automáticamente
       await authService.register({
         full_name: fullName,
         student_code: studentCode,
@@ -39,7 +40,9 @@ export default function RegisterScreen() {
     } catch (err: any) {
       setIsLoading(false);
       console.error('Registration error:', err.response?.data || err.message);
-      setError(err.response?.data?.detail || 'Error al registrar la cuenta. Verifica que el correo/código no existan.');
+      // Mostramos el detalle real del backend si existe
+      const detail = err.response?.data?.detail;
+      setError(typeof detail === 'string' ? detail : 'Error al registrar la cuenta.');
     }
   };
 

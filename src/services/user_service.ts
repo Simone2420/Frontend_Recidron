@@ -2,11 +2,11 @@ import api from './base_service';
 
 export interface UserProfile {
   id?: string | number;
-  full_name?: string;
+  nombre?: string;
   email?: string;
-  student_code?: string;
-  phone?: string;
-  role?: string;
+  codigo_estudiantil?: string;
+  rol_id?: number | string;
+  nombre_rol?: string;
 }
 
 export const userService = {
@@ -16,9 +16,15 @@ export const userService = {
     return response.data;
   },
 
-  updateProfile: async (data: Partial<UserProfile>) => {
-    // Apunta al endpoint para modificar mis datos 
-    const response = await api.put('/usuarios/me', data);
+  updateProfile: async (data: any) => {
+    // Mapeamos lo que venga del front a lo que entiende el back
+    const backendData: any = {};
+    if (data.nombre || data.full_name) backendData.nombre = data.nombre || data.full_name;
+    if (data.email) backendData.email = data.email;
+    if (data.password) backendData.password = data.password;
+    if (data.codigo_estudiantil || data.student_code) backendData.codigo_estudiantil = data.codigo_estudiantil || data.student_code;
+
+    const response = await api.put('/usuarios/me', backendData);
     return response.data;
   },
 

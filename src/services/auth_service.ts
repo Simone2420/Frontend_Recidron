@@ -2,22 +2,24 @@ import api from './base_service';
 
 export const authService = {
   login: async (email: string, password: string) => {
-    // OAuth2PasswordRequestForm
-    const formData = new URLSearchParams();
-    formData.append('username', email); 
-    formData.append('password', password);
-
-    const response = await api.post('/usuarios/login', formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+    // El backend ahora espera UsuarioLogin (JSON) directamente, no Form-Data
+    const response = await api.post('/usuarios/login', {
+      email,
+      password,
     });
 
     return response.data;
   },
 
   register: async (userData: any) => {
-    const response = await api.post('/usuarios/', userData);
+    // Mapeamos los datos del frontend (full_name, student_code) a los del backend (nombre, codigo_estudiantil)
+    const backendData = {
+      nombre: userData.full_name || userData.nombre,
+      email: userData.email,
+      password: userData.password,
+      codigo_estudiantil: userData.student_code || userData.codigo_estudiantil
+    };
+    const response = await api.post('/usuarios/', backendData);
     return response.data;
   },
 
