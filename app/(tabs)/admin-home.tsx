@@ -1,10 +1,10 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, Polyline, Rect, Stop } from 'react-native-svg';
+import { DashboardStats, statsService } from '../../src/services/stats_service';
 import { useAuth } from '../../src/store/authStore';
-import { statsService, DashboardStats } from '../../src/services/stats_service';
 import { Colors, WasteColors } from '../../src/styles/colors';
 
 // ─── Donut Chart ─────────────────────────────────────────────────────────────
@@ -18,7 +18,7 @@ function DonutChart({ data }: { data: Array<{ label: string; value: number }> })
   const actualTotal = data.reduce((sum, item) => sum + item.value, 0);
   const divisorTotal = actualTotal || 1; // Para evitar división por cero
   const colors = ['#2E7D32', '#00695C', '#78909C', '#C62828', '#FBC02D', '#5D4037'];
-  
+
   const segments = data.map((item, i) => ({
     pct: item.value / divisorTotal,
     color: colors[i % colors.length],
@@ -109,7 +109,7 @@ function BarChart({ data }: { data: Array<{ label: string; value: number }> }) {
 // ─── Line Chart ───────────────────────────────────────────────────────────────
 function LineChart({ data }: { data: Array<{ fecha: string; cantidad: number }> }) {
   if (!data || data.length === 0) return <View style={{ height: 100, justifyContent: 'center' }}><Text>Sin datos</Text></View>;
-  
+
   const points = data.map(d => d.cantidad);
   const w = 280;
   const h = 100;
@@ -118,17 +118,19 @@ function LineChart({ data }: { data: Array<{ fecha: string; cantidad: number }> 
   const minV = Math.min(...points);
   const maxV = Math.max(...points);
   const range = maxV - minV || 1;
+  const divisorX = points.length > 1 ? points.length - 1 : 1;
+
   const coords = points.map((v, i) => {
-    const x = padX + (i / (points.length - 1)) * (w - padX * 2);
+    const x = padX + (i / divisorX) * (w - padX * 2);
     const y = padY + ((maxV - v) / range) * (h - padY * 2);
     return `${x},${y}`;
   });
   const polyline = coords.join(' ');
   const firstX = padX;
   const lastX = w - padX;
-  const areaPath = coords.length > 1 
+  const areaPath = coords.length > 1
     ? `M${firstX},${h} L${coords[0]} ${coords.slice(1).map((c) => `L${c}`).join(' ')} L${lastX},${h} Z`
-    : `M${firstX},${h} L${firstX},${coords[0].split(',')[1]} L${lastX},${coords[0].split(',')[1]} L${lastX},${h} Z`;
+    : `M${firstX},${h} L${coords[0]} L${lastX},${coords[0].split(',')[1]} L${lastX},${h} Z`;
 
   return (
     <View>
@@ -144,7 +146,7 @@ function LineChart({ data }: { data: Array<{ fecha: string; cantidad: number }> 
       </Svg>
       <View style={styles.lineLabelsRow}>
         <Text style={styles.lineLabel}>{data[0].fecha}</Text>
-        <Text style={styles.lineLabel}>{data[data.length-1].fecha}</Text>
+        <Text style={styles.lineLabel}>{data[data.length - 1].fecha}</Text>
       </View>
     </View>
   );
@@ -265,7 +267,7 @@ export default function AdminHomeScreen() {
             <ChartCard title="Distribución por Tipo de Residuo">
               <DonutChart data={stats?.distribucion_tipos || []} />
             </ChartCard>
-            
+
             <ChartCard title="Reportes por Zona del Campus">
               <BarChart data={stats?.distribucion_zonas || []} />
             </ChartCard>
@@ -275,7 +277,7 @@ export default function AdminHomeScreen() {
         <ChartCard title="Tendencia de Reportes (Últimos 30d)">
           <LineChart data={trends} />
         </ChartCard>
-        
+
         <ChartCard title="Materiales más Reportados">
           <HorizontalBars data={stats?.distribucion_materiales || []} />
         </ChartCard>
@@ -288,10 +290,10 @@ export default function AdminHomeScreen() {
             {recentReports.length > 0 ? (
               recentReports.map((report, idx) => (
                 <React.Fragment key={report.id || idx}>
-                  <RecentReportRow 
-                    type={report.tipo_residuo || 'No Aprovechable'} 
-                    location={report.zona || 'Ubicación desconocida'} 
-                    time={new Date(report.fecha_reporte).toLocaleDateString()} 
+                  <RecentReportRow
+                    type={report.tipo_residuo || 'No Aprovechable'}
+                    location={report.zona || 'Ubicación desconocida'}
+                    time={report.fecha_reporte ? new Date(report.fecha_reporte.replace(' ', 'T')).toLocaleDateString() : 'Reciente'}
                   />
                   {idx < recentReports.length - 1 && <View style={styles.recentDivider} />}
                 </React.Fragment>
@@ -302,8 +304,8 @@ export default function AdminHomeScreen() {
           </View>
         </View>
 
-        <TouchableOpacity 
-          style={styles.usersBtn} 
+        <TouchableOpacity
+          style={styles.usersBtn}
           activeOpacity={0.85}
           onPress={() => router.push('/admin-users')}
         >

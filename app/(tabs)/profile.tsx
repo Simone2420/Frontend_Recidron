@@ -28,8 +28,14 @@ export default function ProfileScreen() {
         setEditEmail(profile.email || user?.email || '');
         
         if (profile.creado_en) {
-          const date = new Date(profile.creado_en);
-          setMemberSince(date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }));
+          // Reemplazo el espacio por 'T' para asegurar compatibilidad ISO en React Native (Hermes/JSC)
+          const isoDate = profile.creado_en.replace(' ', 'T');
+          const date = new Date(isoDate);
+          if (!isNaN(date.getTime())) {
+            setMemberSince(date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }));
+          } else {
+            setMemberSince('Reciente');
+          }
         }
 
         const dashboard = await userService.getUserDashboard();

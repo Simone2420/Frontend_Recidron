@@ -121,7 +121,7 @@ export default function ReportsScreen() {
               type={item.tipo_nombre as any}
               location={item.zona_nombre}
               material={item.material_nombre}
-              dateStr={item.fecha_reporte ? new Date(item.fecha_reporte).toLocaleDateString() : 'Recientemente'}
+              dateStr={item.fecha_reporte ? new Date(item.fecha_reporte.replace(' ', 'T')).toLocaleDateString() : 'Recientemente'}
               onPress={() => router.push({ pathname: '/report-detail', params: { id: item.id } })}
             />
           )}
