@@ -71,5 +71,25 @@ export const wasteService = {
     // Asumimos que GET /reportes/ devuelve todo por ahora.
     const response = await api.get('/reportes/');
     return response.data;
+  },
+  getReportById: async (id: number) => {
+    const response = await api.get(`/reportes/${id}`);
+    return response.data;
+  },
+  getMaterialById: async (id: number) => {
+    const response = await api.get(`/materiales/${id}`);
+    return response.data;
+  },
+  getTypeById: async (id: number) => {
+    const response = await api.get(`/tipos_residuo/${id}`);
+    return response.data;
+  },
+  getZoneById: async (id: number) => {
+    const response = await api.get(`/zonas/${id}`);
+    return response.data;
+  },
+  getSizeById: async (id: number) => {
+    const response = await api.get(`/tamanos/${id}`);
+    return response.data;
   }
 };

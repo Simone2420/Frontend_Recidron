@@ -2,8 +2,8 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
 const api = axios.create({
-  // URL local de tu servidor FastAPI (basada en tu IP actual 192.168.0.7)
-  baseURL: 'http://192.168.0.7:3000',
+  // URL local de tu servidor FastAPI (basada en tu IP actual 10.245.176.241)
+  baseURL: 'http://10.245.176.241:3000',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',

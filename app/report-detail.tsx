@@ -1,6 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import React from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { WasteReport, wasteService } from '../src/services/waste_service';
+
 import {
   SafeAreaView,
   ScrollView,
@@ -12,6 +14,37 @@ import {
 import { Colors } from '../src/styles/colors';
 
 export default function ReportDetailScreen() {
+  const { id } = useLocalSearchParams();
+  const [report, setReport] = useState<WasteReport | null>(null);
+  const [type, setType] = useState<string | null>(null);
+  const [material, setMaterial] = useState<string | null>(null);
+  const [zone, setZone] = useState<string | null>(null);
+  const [size, setSize] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReport = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+        const reportData = await wasteService.getReportById(Number(id));
+        setReport(reportData);
+        const typeData = await wasteService.getTypeById(reportData.tipo_residuo_id);
+        setType(typeData.nombre_tipo);
+        const materialData = await wasteService.getMaterialById(reportData.material_id);
+        setMaterial(materialData.nombre_material);
+        const zoneData = await wasteService.getZoneById(reportData.zona_id);
+        setZone(zoneData.nombre_zona);
+        const sizeData = await wasteService.getSizeById(reportData.tamano_id);
+        setSize(sizeData.nombre_tamano);
+      } catch (error) {
+        console.error("Error al obtener el reporte:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReport();
+  }, [id]); 
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Header */}
@@ -35,19 +68,19 @@ export default function ReportDetailScreen() {
           </View>
           <View style={styles.card}>
             <View style={styles.cardRow}>
-              <Text style={styles.cardLabel}>Reporte ID</Text>
-              <Text style={styles.cardValueMono}>#REC-98234-AX</Text>
+              <Text style={styles.cardLabel}>ID</Text>
+              <Text style={styles.cardValueMono}>{report?.id}</Text>
             </View>
             <View style={styles.cardDivider} />
             <View style={styles.cardRow}>
               <Text style={styles.cardLabel}>Fecha y Hora</Text>
-              <Text style={styles.cardValue}>24 Oct, 2023 • 14:30</Text>
+              <Text style={styles.cardValue}>{report?.fecha_reporte}</Text>
             </View>
             <View style={styles.cardDivider} />
             <View style={styles.cardRow}>
               <Text style={styles.cardLabel}>Reportado por</Text>
               <View style={styles.cardUserRow}>
-                <Text style={styles.cardValue}>Usuario de Prueba</Text>
+                <Text style={styles.cardValue}>{report?.usuario_id}</Text>
                 <View style={styles.cardUserAvatar}>
                   <MaterialIcons name="person" size={14} color={Colors.primary} />
                 </View>
@@ -67,19 +100,19 @@ export default function ReportDetailScreen() {
               <View style={styles.classCell}>
                 <Text style={styles.classLabel}>TIPO</Text>
                 <View style={styles.classBadge}>
-                  <Text style={styles.classBadgeText}>Plásticos</Text>
+                  <Text style={styles.classBadgeText}>{type}</Text>
                 </View>
               </View>
               <View style={styles.classCell}>
                 <Text style={styles.classLabel}>MATERIAL</Text>
                 <View style={styles.classMaterialRow}>
                   <MaterialIcons name="recycling" size={18} color={Colors.primary} />
-                  <Text style={styles.classValue}>PET / HDPE</Text>
+                  <Text style={styles.classValue}>{material}</Text>
                 </View>
               </View>
               <View style={[styles.classCell, styles.classCellFull]}>
                 <Text style={styles.classLabel}>TAMAÑO ESTIMADO</Text>
-                <Text style={styles.classValue}>Mediano (2-5kg)</Text>
+                <Text style={styles.classValue}>{size}</Text>
               </View>
             </View>
           </View>
@@ -97,30 +130,30 @@ export default function ReportDetailScreen() {
                 <MaterialIcons name="place" size={22} color={Colors.primary} />
               </View>
               <View>
-                <Text style={styles.locationName}>Zona Reserva</Text>
-                <Text style={styles.locationSub}>Sector Norte - Cuadrante B12</Text>
+                <Text style={styles.locationName}>Zona: {zone}</Text>
+                <Text style={styles.locationSub}>Localización registrada</Text>
               </View>
             </View>
             <View style={styles.cardDivider} />
             <View style={styles.coordsGrid}>
               <View style={styles.coordCell}>
                 <Text style={styles.classLabel}>COORDENADAS</Text>
-                <Text style={styles.cardValueMono}>19.4326° N{'\n'}99.1332° W</Text>
+                <Text style={styles.cardValueMono}>No especificada</Text>
               </View>
               <View style={styles.coordCell}>
                 <Text style={styles.classLabel}>PRECISIÓN</Text>
                 <View style={styles.classMaterialRow}>
                   <MaterialIcons name="gps-fixed" size={16} color={Colors.primary} />
-                  <Text style={styles.cardValue}>+/- 2.4 m</Text>
+                  <Text style={styles.cardValue}>No especificada</Text>
                 </View>
               </View>
               <View style={styles.coordCell}>
                 <Text style={styles.classLabel}>ALTITUD</Text>
-                <Text style={styles.cardValue}>2,240 msnm</Text>
+                <Text style={styles.cardValue}>No especificada</Text>
               </View>
             </View>
           </View>
-        </View>
+        </View> 
 
         {/* 4. Descripción */}
         <View style={styles.section}>
@@ -130,9 +163,7 @@ export default function ReportDetailScreen() {
           </View>
           <View style={styles.descriptionBlock}>
             <Text style={styles.descriptionText}>
-              "Se localizó un cúmulo de envases plásticos cerca del cauce del río. El material
-              parece llevar varios meses en el lugar debido al desgaste solar. No se detectan
-              olores químicos, principalmente residuos domésticos."
+              {report?.descripcion || "Sin descripción proporcionada."}
             </Text>
           </View>
         </View>
