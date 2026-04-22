@@ -175,18 +175,21 @@ function HorizontalBars({ data }: { data: Array<{ label: string; value: number }
 
 // ─── Recent Report Row ────────────────────────────────────────────────────────
 type WasteType = keyof typeof WasteColors;
-function RecentReportRow({ type, location, time }: { type: WasteType; location: string; time: string }) {
+function RecentReportRow({ type, location, time, onPress }: { type: WasteType; location: string; time: string; onPress?: () => void }) {
   const colors = WasteColors[type] || WasteColors['No Aprovechable'];
   return (
-    <View style={styles.recentRow}>
+    <TouchableOpacity style={styles.recentRow} onPress={onPress} activeOpacity={onPress ? 0.7 : 1}>
       <View style={styles.recentLeft}>
         <View style={[styles.recentBadge, { backgroundColor: colors.bg }]}>
           <Text style={[styles.recentBadgeText, { color: colors.text }]}>{type}</Text>
         </View>
         <Text style={styles.recentLocation}>{location}</Text>
       </View>
-      <Text style={styles.recentTime}>{time}</Text>
-    </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        <Text style={styles.recentTime}>{time}</Text>
+        {onPress && <MaterialIcons name="chevron-right" size={16} color={Colors.slate400} />}
+      </View>
+    </TouchableOpacity>
   );
 }
 
@@ -285,15 +288,25 @@ export default function AdminHomeScreen() {
         <View style={styles.chartCard}>
           <View style={styles.chartCardHeader}>
             <Text style={styles.chartCardTitle}>Reportes recientes</Text>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/reports')}>
+              <Text style={{ fontSize: 12, color: Colors.primary, fontWeight: '600' }}>Ver todos</Text>
+            </TouchableOpacity>
           </View>
           <View style={styles.recentList}>
             {recentReports.length > 0 ? (
               recentReports.map((report, idx) => (
                 <React.Fragment key={report.id || idx}>
                   <RecentReportRow
-                    type={report.tipo_residuo || 'No Aprovechable'}
-                    location={report.zona || 'Ubicación desconocida'}
-                    time={report.fecha_reporte ? new Date(report.fecha_reporte.replace(' ', 'T')).toLocaleDateString() : 'Reciente'}
+                    type={(report.tipo_nombre || 'No Aprovechable') as WasteType}
+                    location={report.zona_nombre || report.descripcion?.slice(0, 40) || 'Ubicación desconocida'}
+                    time={
+                      report.fecha_reporte
+                        ? new Date(report.fecha_reporte.replace(' ', 'T')).toLocaleString('es-CO', {
+                            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                          })
+                        : 'Reciente'
+                    }
+                    onPress={() => router.push({ pathname: '/report-detail', params: { id: report.id } })}
                   />
                   {idx < recentReports.length - 1 && <View style={styles.recentDivider} />}
                 </React.Fragment>

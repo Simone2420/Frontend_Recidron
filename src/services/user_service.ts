@@ -42,6 +42,11 @@ export const userService = {
     return response.data;
   },
 
+  getUserById: async (id: number): Promise<UserProfile> => {
+    const response = await api.get(`/usuarios/${id}`);
+    return response.data;
+  },
+
   changeUserRole: async (userId: number, roleId: number) => {
     // Método administrativo: Cambiar el rol.
     const response = await api.put(`/usuarios/${userId}`, { rol_id: roleId });

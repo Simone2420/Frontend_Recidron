@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { userService } from '../src/services/user_service';
 import { WasteReport, wasteService } from '../src/services/waste_service';
 
 import {
@@ -14,6 +15,22 @@ import {
 } from 'react-native';
 import { Colors } from '../src/styles/colors';
 
+const formatDate = (dateStr?: string): string => {
+  if (!dateStr) return 'Sin fecha';
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleString('es-CO', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return dateStr;
+  }
+};
+
 export default function ReportDetailScreen() {
   const { id } = useLocalSearchParams();
   const [report, setReport] = useState<WasteReport | null>(null);
@@ -21,6 +38,7 @@ export default function ReportDetailScreen() {
   const [material, setMaterial] = useState<string | null>(null);
   const [zone, setZone] = useState<string | null>(null);
   const [size, setSize] = useState<string | null>(null);
+  const [reporter, setReporter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,14 +48,22 @@ export default function ReportDetailScreen() {
         setLoading(true);
         const reportData = await wasteService.getReportById(Number(id));
         setReport(reportData);
-        const typeData = await wasteService.getTypeById(reportData.tipo_residuo_id);
+        const [typeData, materialData, zoneData, sizeData] = await Promise.all([
+          wasteService.getTypeById(reportData.tipo_residuo_id),
+          wasteService.getMaterialById(reportData.material_id),
+          wasteService.getZoneById(reportData.zona_id),
+          wasteService.getSizeById(reportData.tamano_id),
+        ]);
         setType(typeData.nombre_tipo);
-        const materialData = await wasteService.getMaterialById(reportData.material_id);
         setMaterial(materialData.nombre_material);
-        const zoneData = await wasteService.getZoneById(reportData.zona_id);
         setZone(zoneData.nombre_zona);
-        const sizeData = await wasteService.getSizeById(reportData.tamano_id);
         setSize(sizeData.nombre_tamano);
+        try {
+          const userData = await userService.getUserById(reportData.usuario_id);
+          setReporter(userData.nombre || `Usuario #${reportData.usuario_id}`);
+        } catch {
+          setReporter(`Usuario #${reportData.usuario_id}`);
+        }
       } catch (error) {
         console.error("Error al obtener el reporte:", error);
       } finally {
@@ -80,16 +106,16 @@ export default function ReportDetailScreen() {
               <View style={styles.cardDivider} />
               <View style={styles.cardRow}>
                 <Text style={styles.cardLabel}>Fecha y Hora</Text>
-                <Text style={styles.cardValue}>{report?.fecha_reporte}</Text>
+                <Text style={styles.cardValue}>{formatDate(report?.fecha_reporte)}</Text>
               </View>
               <View style={styles.cardDivider} />
               <View style={styles.cardRow}>
                 <Text style={styles.cardLabel}>Reportado por</Text>
                 <View style={styles.cardUserRow}>
-                  <Text style={styles.cardValue}>{report?.usuario_id}</Text>
                   <View style={styles.cardUserAvatar}>
                     <MaterialIcons name="person" size={14} color={Colors.primary} />
                   </View>
+                  <Text style={styles.cardValue}>{reporter ?? `#${report?.usuario_id}`}</Text>
                 </View>
               </View>
             </View>
@@ -176,9 +202,9 @@ export default function ReportDetailScreen() {
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerLabel}>INTERNAL REGISTRY SYSTEM</Text>
-            <Text style={styles.footerText}>Reference: ID-98234-AX-2023-V1</Text>
-            <Text style={styles.footerText}>Endpoint: api.recidron.io/v1/reports/fetch/{id}</Text>
+            <Text style={styles.footerLabel}>RECIDRON · SISTEMA DE REPORTES</Text>
+            <Text style={styles.footerText}>Reporte #{id}</Text>
+            <Text style={styles.footerText}>{formatDate(report?.fecha_reporte)}</Text>
           </View>
 
         </ScrollView>

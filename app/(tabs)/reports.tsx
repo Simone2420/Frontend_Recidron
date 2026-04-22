@@ -5,9 +5,10 @@ import { FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, Toucha
 import { ReportCard } from '../../src/components/cards';
 import { Colors, WasteColors } from '../../src/styles/colors';
 import { wasteService, WasteReport } from '../../src/services/waste_service';
+import { userService } from '../../src/services/user_service';
 
-const FILTERS = ['Todos', 'Aprovechable', 'Peligroso', 'Orgánico', 'No Aprovechable'] as const;
-type FilterType = typeof FILTERS[number];
+const TYPE_FILTERS = ['Todos', 'Aprovechable', 'Peligroso', 'Orgánico', 'No Aprovechable'] as const;
+type FilterType = typeof TYPE_FILTERS[number] | 'Mis Reportes';
 
 // Puedes mantener MOCK_REPORTS como fallback si falla la red
 const MOCK_REPORTS: WasteReport[] = [
@@ -21,9 +22,13 @@ export default function ReportsScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('Todos');
   const [reports, setReports] = useState<any[]>([]); // Usamos any temporalmente para las nuevas propiedades del back
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchReports();
+    userService.getProfile()
+      .then((profile) => setCurrentUserId(Number(profile.id)))
+      .catch(() => setCurrentUserId(null));
   }, []);
 
   const fetchReports = async () => {
@@ -40,9 +45,13 @@ export default function ReportsScreen() {
   };
 
   const filteredReports = reports.filter((report) => {
-    // Ajustamos filtros a los nuevos nombres del backend
     const typeLabel = report.tipo_nombre || 'General';
-    const matchesFilter = activeFilter === 'Todos' || typeLabel === activeFilter;
+    let matchesFilter: boolean;
+    if (activeFilter === 'Mis Reportes') {
+      matchesFilter = currentUserId !== null && Number(report.usuario_id) === currentUserId;
+    } else {
+      matchesFilter = activeFilter === 'Todos' || typeLabel === activeFilter;
+    }
     const matchesSearch =
       search === '' ||
       (report.zona_nombre || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -80,7 +89,23 @@ export default function ReportsScreen() {
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContainer}>
-        {FILTERS.map((filter) => {
+        {/* Filtro especial: Mis Reportes */}
+        <TouchableOpacity
+          style={[styles.filterChip, styles.filterChipMine, activeFilter === 'Mis Reportes' && styles.filterChipMineActive]}
+          onPress={() => setActiveFilter('Mis Reportes')}
+          activeOpacity={0.7}
+        >
+          <MaterialIcons
+            name="person"
+            size={14}
+            color={activeFilter === 'Mis Reportes' ? Colors.white : Colors.primary}
+            style={{ marginRight: 4 }}
+          />
+          <Text style={[styles.filterChipText, activeFilter === 'Mis Reportes' && styles.filterChipTextActive]}>Mis Reportes</Text>
+        </TouchableOpacity>
+
+        {/* Filtros por tipo */}
+        {TYPE_FILTERS.map((filter) => {
           const isActive = activeFilter === filter;
           return (
             <TouchableOpacity
@@ -111,9 +136,21 @@ export default function ReportsScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <MaterialIcons name="inventory" size={48} color={Colors.slate200} />
-              <Text style={styles.emptyText}>Aún no se han registrado reportes.</Text>
-              <Text style={styles.emptySubText}>¡Sé el primero en reportar un residuo!</Text>
+              <MaterialIcons
+                name={activeFilter === 'Mis Reportes' ? 'person-outline' : 'inventory'}
+                size={48}
+                color={Colors.slate200}
+              />
+              <Text style={styles.emptyText}>
+                {activeFilter === 'Mis Reportes'
+                  ? 'Aún no tienes reportes.'
+                  : 'No hay reportes con este filtro.'}
+              </Text>
+              <Text style={styles.emptySubText}>
+                {activeFilter === 'Mis Reportes'
+                  ? '¡Anímate a hacer tu primer reporte!'
+                  : 'Prueba cambiando el filtro o la búsqueda.'}
+              </Text>
             </View>
           }
           renderItem={({ item }) => (
@@ -156,7 +193,14 @@ const styles = StyleSheet.create({
   filterChipTextActive: { fontWeight: '700', color: Colors.white },
   resultsRow: { paddingHorizontal: 16, paddingBottom: 4 },
   resultsText: { fontSize: 12, color: Colors.slate400, fontWeight: '500' },
+  filterChipMine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderStyle: 'dashed',
+  },
+  filterChipMineActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   listContent: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 64, gap: 12 },
   emptyText: { fontSize: 15, color: Colors.slate400, fontWeight: '500' },
+  emptySubText: { fontSize: 13, color: Colors.slate400, textAlign: 'center' },
 });
