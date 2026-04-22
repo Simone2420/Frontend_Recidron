@@ -4,10 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Alert } from 'react-native';
 import { Colors } from '../src/styles/colors';
 import { userService, UserProfile } from '../src/services/user_service';
+import { useAuth } from '../src/store/authStore';
 
 export default function AdminUsersScreen() {
+  const { user: currentUser, logout } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdatingRole, setIsUpdatingRole] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -28,6 +31,13 @@ export default function AdminUsersScreen() {
   const handleToggleRole = async (user: UserProfile & { rol_id?: number }) => {
     // Si rol_id === 1 es admin, lo bajamos a 2 (Autor). Si es 2, lo subimos a 1 (Admin).
     const isCurrentlyAdmin = user.rol_id === 1;
+
+    // Evitar que cualquiera pueda revocar al administrador maestro (usualmente ID 1)
+    if (isCurrentlyAdmin && (user.id === 1 || user.id === '1')) {
+      Alert.alert("Acción no permitida", "No se pueden revocar los permisos del administrador maestro.");
+      return;
+    }
+
     const actionText = isCurrentlyAdmin ? 'Revocar permisos de Administrador' : 'Ascender a Administrador';
     const newRoleId = isCurrentlyAdmin ? 2 : 1;
 
@@ -40,14 +50,33 @@ export default function AdminUsersScreen() {
           text: "Confirmar", 
           style: isCurrentlyAdmin ? "destructive" : "default",
           onPress: async () => {
+            setIsUpdatingRole(true);
             try {
               if (user.id) {
                 await userService.changeUserRole(typeof user.id === 'string' ? parseInt(user.id) : user.id, newRoleId);
-                // Refrescar al terminar
-                fetchUsers();
+                
+                // Si el usuario que se está revocando es el mismo que tiene iniciada la sesión, cerrarla
+                if (isCurrentlyAdmin && (user.id === currentUser?.id || String(user.id) === String(currentUser?.id))) {
+                  Alert.alert(
+                    "Permisos revocados", 
+                    "Te has revocado los permisos de administrador. Tu sesión se cerrará.",
+                    [{
+                      text: "OK", 
+                      onPress: () => {
+                        logout();
+                        router.replace('/(auth)/login');
+                      }
+                    }]
+                  );
+                } else {
+                  // Refrescar al terminar el cambio de otros usuarios
+                  await fetchUsers();
+                }
               }
             } catch (error) {
               Alert.alert("Error", "No se pudo actualizar el rol");
+            } finally {
+              setIsUpdatingRole(false);
             }
           }
         }
@@ -114,6 +143,12 @@ export default function AdminUsersScreen() {
           />
         )}
       </View>
+
+      {isUpdatingRole && (
+        <View style={styles.overlay}>
+          <ActivityIndicator size="large" color={Colors.white} />
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -214,4 +249,11 @@ const styles = StyleSheet.create({
   },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 64, gap: 12 },
   emptyText: { fontSize: 15, color: Colors.slate400, fontWeight: '500' },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 999,
+  },
 });
