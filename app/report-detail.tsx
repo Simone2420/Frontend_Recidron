@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { WasteReport, wasteService } from '../src/services/waste_service';
 
 import {
+  ActivityIndicator,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -58,124 +59,130 @@ export default function ReportDetailScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-
-        {/* 1. Identificación */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleRow}>
-            <MaterialIcons name="fingerprint" size={22} color={Colors.primary} />
-            <Text style={styles.sectionTitle}>Identificación</Text>
-          </View>
-          <View style={styles.card}>
-            <View style={styles.cardRow}>
-              <Text style={styles.cardLabel}>ID</Text>
-              <Text style={styles.cardValueMono}>{report?.id}</Text>
-            </View>
-            <View style={styles.cardDivider} />
-            <View style={styles.cardRow}>
-              <Text style={styles.cardLabel}>Fecha y Hora</Text>
-              <Text style={styles.cardValue}>{report?.fecha_reporte}</Text>
-            </View>
-            <View style={styles.cardDivider} />
-            <View style={styles.cardRow}>
-              <Text style={styles.cardLabel}>Reportado por</Text>
-              <View style={styles.cardUserRow}>
-                <Text style={styles.cardValue}>{report?.usuario_id}</Text>
-                <View style={styles.cardUserAvatar}>
-                  <MaterialIcons name="person" size={14} color={Colors.primary} />
-                </View>
-              </View>
-            </View>
-          </View>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Cargando detalles...</Text>
         </View>
-
-        {/* 2. Clasificación del residuo */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleRow}>
-            <MaterialIcons name="category" size={22} color={Colors.primary} />
-            <Text style={styles.sectionTitle}>Clasificación del residuo</Text>
-          </View>
-          <View style={styles.card}>
-            <View style={styles.classGrid}>
-              <View style={styles.classCell}>
-                <Text style={styles.classLabel}>TIPO</Text>
-                <View style={styles.classBadge}>
-                  <Text style={styles.classBadgeText}>{type}</Text>
-                </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* 1. Identificación */}
+          <View style={styles.section}>
+            <View style={styles.sectionTitleRow}>
+              <MaterialIcons name="fingerprint" size={22} color={Colors.primary} />
+              <Text style={styles.sectionTitle}>Identificación</Text>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.cardRow}>
+                <Text style={styles.cardLabel}>ID</Text>
+                <Text style={styles.cardValueMono}>{report?.id}</Text>
               </View>
-              <View style={styles.classCell}>
-                <Text style={styles.classLabel}>MATERIAL</Text>
-                <View style={styles.classMaterialRow}>
-                  <MaterialIcons name="recycling" size={18} color={Colors.primary} />
-                  <Text style={styles.classValue}>{material}</Text>
-                </View>
+              <View style={styles.cardDivider} />
+              <View style={styles.cardRow}>
+                <Text style={styles.cardLabel}>Fecha y Hora</Text>
+                <Text style={styles.cardValue}>{report?.fecha_reporte}</Text>
               </View>
-              <View style={[styles.classCell, styles.classCellFull]}>
-                <Text style={styles.classLabel}>TAMAÑO ESTIMADO</Text>
-                <Text style={styles.classValue}>{size}</Text>
+              <View style={styles.cardDivider} />
+              <View style={styles.cardRow}>
+                <Text style={styles.cardLabel}>Reportado por</Text>
+                <View style={styles.cardUserRow}>
+                  <Text style={styles.cardValue}>{report?.usuario_id}</Text>
+                  <View style={styles.cardUserAvatar}>
+                    <MaterialIcons name="person" size={14} color={Colors.primary} />
+                  </View>
+                </View>
               </View>
             </View>
           </View>
-        </View>
 
-        {/* 3. Ubicación */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleRow}>
-            <MaterialIcons name="explore" size={22} color={Colors.primary} />
-            <Text style={styles.sectionTitle}>Ubicación</Text>
-          </View>
-          <View style={styles.card}>
-            <View style={styles.locationHeader}>
-              <View style={styles.locationIconWrapper}>
-                <MaterialIcons name="place" size={22} color={Colors.primary} />
-              </View>
-              <View>
-                <Text style={styles.locationName}>Zona: {zone}</Text>
-                <Text style={styles.locationSub}>Localización registrada</Text>
+          {/* 2. Clasificación del residuo */}
+          <View style={styles.section}>
+            <View style={styles.sectionTitleRow}>
+              <MaterialIcons name="category" size={22} color={Colors.primary} />
+              <Text style={styles.sectionTitle}>Clasificación del residuo</Text>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.classGrid}>
+                <View style={styles.classCell}>
+                  <Text style={styles.classLabel}>TIPO</Text>
+                  <View style={styles.classBadge}>
+                    <Text style={styles.classBadgeText}>{type}</Text>
+                  </View>
+                </View>
+                <View style={styles.classCell}>
+                  <Text style={styles.classLabel}>MATERIAL</Text>
+                  <View style={styles.classMaterialRow}>
+                    <MaterialIcons name="recycling" size={18} color={Colors.primary} />
+                    <Text style={styles.classValue}>{material}</Text>
+                  </View>
+                </View>
+                <View style={[styles.classCell, styles.classCellFull]}>
+                  <Text style={styles.classLabel}>TAMAÑO ESTIMADO</Text>
+                  <Text style={styles.classValue}>{size}</Text>
+                </View>
               </View>
             </View>
-            <View style={styles.cardDivider} />
-            <View style={styles.coordsGrid}>
-              <View style={styles.coordCell}>
-                <Text style={styles.classLabel}>COORDENADAS</Text>
-                <Text style={styles.cardValueMono}>No especificada</Text>
+          </View>
+
+          {/* 3. Ubicación */}
+          <View style={styles.section}>
+            <View style={styles.sectionTitleRow}>
+              <MaterialIcons name="explore" size={22} color={Colors.primary} />
+              <Text style={styles.sectionTitle}>Ubicación</Text>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.locationHeader}>
+                <View style={styles.locationIconWrapper}>
+                  <MaterialIcons name="place" size={22} color={Colors.primary} />
+                </View>
+                <View>
+                  <Text style={styles.locationName}>Zona: {zone}</Text>
+                  <Text style={styles.locationSub}>Localización registrada</Text>
+                </View>
               </View>
-              <View style={styles.coordCell}>
-                <Text style={styles.classLabel}>PRECISIÓN</Text>
-                <View style={styles.classMaterialRow}>
-                  <MaterialIcons name="gps-fixed" size={16} color={Colors.primary} />
+              <View style={styles.cardDivider} />
+              <View style={styles.coordsGrid}>
+                <View style={styles.coordCell}>
+                  <Text style={styles.classLabel}>COORDENADAS</Text>
+                  <Text style={styles.cardValueMono}>No especificada</Text>
+                </View>
+                <View style={styles.coordCell}>
+                  <Text style={styles.classLabel}>PRECISIÓN</Text>
+                  <View style={styles.classMaterialRow}>
+                    <MaterialIcons name="gps-fixed" size={16} color={Colors.primary} />
+                    <Text style={styles.cardValue}>No especificada</Text>
+                  </View>
+                </View>
+                <View style={styles.coordCell}>
+                  <Text style={styles.classLabel}>ALTITUD</Text>
                   <Text style={styles.cardValue}>No especificada</Text>
                 </View>
               </View>
-              <View style={styles.coordCell}>
-                <Text style={styles.classLabel}>ALTITUD</Text>
-                <Text style={styles.cardValue}>No especificada</Text>
-              </View>
+            </View>
+          </View> 
+
+          {/* 4. Descripción */}
+          <View style={styles.section}>
+            <View style={styles.sectionTitleRow}>
+              <MaterialIcons name="description" size={22} color={Colors.primary} />
+              <Text style={styles.sectionTitle}>Descripción</Text>
+            </View>
+            <View style={styles.descriptionBlock}>
+              <Text style={styles.descriptionText}>
+                {report?.descripcion || "Sin descripción proporcionada."}
+              </Text>
             </View>
           </View>
-        </View> 
 
-        {/* 4. Descripción */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleRow}>
-            <MaterialIcons name="description" size={22} color={Colors.primary} />
-            <Text style={styles.sectionTitle}>Descripción</Text>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerLabel}>INTERNAL REGISTRY SYSTEM</Text>
+            <Text style={styles.footerText}>Reference: ID-98234-AX-2023-V1</Text>
+            <Text style={styles.footerText}>Endpoint: api.recidron.io/v1/reports/fetch/{id}</Text>
           </View>
-          <View style={styles.descriptionBlock}>
-            <Text style={styles.descriptionText}>
-              {report?.descripcion || "Sin descripción proporcionada."}
-            </Text>
-          </View>
-        </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerLabel}>INTERNAL REGISTRY SYSTEM</Text>
-          <Text style={styles.footerText}>Reference: ID-98234-AX-2023-V1</Text>
-          <Text style={styles.footerText}>Endpoint: api.recidron.io/v1/reports/fetch/98234</Text>
-        </View>
-
-      </ScrollView>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
@@ -184,6 +191,17 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.backgroundLight,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: Colors.primary,
+    fontWeight: '500',
   },
   header: {
     flexDirection: 'row',
