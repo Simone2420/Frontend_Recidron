@@ -14,6 +14,8 @@ export default function ProfileScreen() {
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState(user?.email || '');
   const [editPassword, setEditPassword] = useState('');
+  const [editConfirmPassword, setEditConfirmPassword] = useState('');
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -58,31 +60,54 @@ export default function ProfileScreen() {
   const userRole = user?.role === 'admin' ? 'Administrador' : 'Estudiante'; 
 
   const handleSave = async () => {
+    setSaveError(null);
+
+    // Validaciones locales antes de llamar al backend
+    if (editPassword || editConfirmPassword) {
+      if (!editPassword || !editConfirmPassword) {
+        setSaveError('Debes completar ambos campos de contraseña.');
+        return;
+      }
+      if (editPassword !== editConfirmPassword) {
+        setSaveError('Las contraseñas no coinciden.');
+        return;
+      }
+      if (editPassword.length < 8) {
+        setSaveError('La contraseña debe tener mínimo 8 caracteres.');
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
       const dataToUpdate: any = {
-        nombre: editName, // Cambiado full_name -> nombre
-        email: editEmail
+        nombre: editName,
+        email:  editEmail,
       };
       if (editPassword) {
-        dataToUpdate.password = editPassword;
+        dataToUpdate.nueva_password    = editPassword;
+        dataToUpdate.confirmar_password = editConfirmPassword;
       }
       await userService.updateProfile(dataToUpdate);
-      
-      // Actualizar el estado global del store si el nombre cambió
+
+      // Actualizar el estado global del store
       setUser({ ...user!, nombre: editName, email: editEmail });
-      
+
       setIsEditVisible(false);
-      setEditPassword(''); 
-    } catch (err) {
-      console.error('Error actualizando perfil', err);
+      setEditPassword('');
+      setEditConfirmPassword('');
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || 'Error al actualizar el perfil.';
+      setSaveError(typeof msg === 'string' ? msg : JSON.stringify(msg));
     } finally {
       setIsSaving(false);
     }
   };
 
-  const isPasswordWeak = editPassword.length > 0 && editPassword.length < 8;
+  const isPasswordWeak   = editPassword.length > 0 && editPassword.length < 8;
   const isPasswordStrong = editPassword.length >= 8;
+  const passwordMismatch = editConfirmPassword.length > 0 && editPassword !== editConfirmPassword;
+  const passwordMatch    = editConfirmPassword.length > 0 && editPassword === editConfirmPassword && isPasswordStrong;
 
   const handleLogout = () => {
     logout();
@@ -213,16 +238,33 @@ export default function ProfileScreen() {
               <View style={styles.separator} />
 
               <InputField
-                label="Nueva Contraseña (Opcional)"
+                label="Nueva Contraseña (opcional)"
                 icon="lock"
                 value={editPassword}
                 onChangeText={setEditPassword}
                 secureTextEntry
                 placeholder="Escribe tu nueva clave"
-                error={isPasswordWeak ? 'Insegura: Mínimo 8 caracteres.' : undefined}
+                error={isPasswordWeak ? 'Insegura: mínimo 8 caracteres.' : undefined}
               />
               {isPasswordStrong && (
                 <Text style={styles.passwordSuccessText}>✓ Nivel de seguridad óptimo</Text>
+              )}
+
+              <InputField
+                label="Confirmar Nueva Contraseña"
+                icon="lock"
+                value={editConfirmPassword}
+                onChangeText={setEditConfirmPassword}
+                secureTextEntry
+                placeholder="Repite tu nueva clave"
+                error={passwordMismatch ? 'Las contraseñas no coinciden.' : undefined}
+              />
+              {passwordMatch && (
+                <Text style={styles.passwordSuccessText}>✓ Las contraseñas coinciden</Text>
+              )}
+
+              {saveError && (
+                <Text style={styles.errorText}>{saveError}</Text>
               )}
 
               <Button
@@ -349,11 +391,20 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   passwordSuccessText: {
-    color: '#059669', // Verde confirmación
+    color: '#059669',
     fontSize: 13,
     fontWeight: '600',
-    marginTop: -8, // Lo subo poquito hacia el input
+    marginTop: -8,
     marginBottom: 16,
     paddingHorizontal: 6,
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 4,
+    marginBottom: 12,
+    paddingHorizontal: 6,
+    textAlign: 'center',
   },
 });

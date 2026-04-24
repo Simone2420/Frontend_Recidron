@@ -18,12 +18,15 @@ export const userService = {
   },
 
   updateProfile: async (data: any) => {
-    // Mapeamos lo que venga del front a lo que entiende el back
+    // PUT /usuarios/me — mapeamos los campos del front al contrato del backend
     const backendData: any = {};
-    if (data.nombre || data.full_name) backendData.nombre = data.nombre || data.full_name;
-    if (data.email) backendData.email = data.email;
-    if (data.password) backendData.password = data.password;
-    if (data.codigo_estudiantil || data.student_code) backendData.codigo_estudiantil = data.codigo_estudiantil || data.student_code;
+    if (data.nombre)             backendData.nombre             = data.nombre;
+    if (data.email)              backendData.email              = data.email;
+    if (data.codigo_estudiantil) backendData.codigo_estudiantil = data.codigo_estudiantil;
+
+    // Contraseña: sólo se incluye si el usuario quiso cambiarla
+    if (data.nueva_password)    backendData.nueva_password    = data.nueva_password;
+    if (data.confirmar_password) backendData.confirmar_password = data.confirmar_password;
 
     const response = await api.put('/usuarios/me', backendData);
     return response.data;
