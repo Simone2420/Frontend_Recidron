@@ -1,38 +1,113 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { KeyboardAvoidingView, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { useAuth } from '../../src/store/authStore';
 import { Colors } from '../../src/styles/colors';
 import { Button, InputField } from '../../src/components/ui';
+import { userService } from '../../src/services/user_service';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
 
   const [isEditVisible, setIsEditVisible] = useState(false);
-  const [editName, setEditName] = useState('Usuario de Prueba');
+  const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState(user?.email || '');
   const [editPassword, setEditPassword] = useState('');
+  const [editConfirmPassword, setEditConfirmPassword] = useState('');
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const [reportCount, setReportCount] = useState('0');
+  const [memberSince, setMemberSince] = useState('...');
 
-  const userName = editName;
-  const userInitials = 'CP';
-  const userRole = user?.role === 'admin' ? 'Administrador' : 'Invitado';
-  const reportCount = 128;
-  const memberSince = 'Oct 2023';
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const profile = await userService.getProfile();
+        setEditName(profile.nombre || 'Usuario');
+        setEditEmail(profile.email || user?.email || '');
+        
+        if (profile.creado_en) {
+          // Reemplazo el espacio por 'T' para asegurar compatibilidad ISO en React Native (Hermes/JSC)
+          const isoDate = profile.creado_en.replace(' ', 'T');
+          const date = new Date(isoDate);
+          if (!isNaN(date.getTime())) {
+            setMemberSince(date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }));
+          } else {
+            setMemberSince('Reciente');
+          }
+        }
 
-  const handleSave = () => {
+        const dashboard = await userService.getUserDashboard();
+        if (dashboard && dashboard.stats && dashboard.stats.length > 0) {
+          // Buscamos el valor de "Mis Reportes"
+          const totalStat = dashboard.stats.find((s: any) => s.title === "Mis Reportes");
+          if (totalStat) setReportCount(totalStat.value);
+        }
+      } catch (err) {
+        console.log('Error al cargar perfil o stats:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProfileData();
+  }, [user]);
+
+  const userName = editName || user?.nombre || 'Usuario';
+  const userInitials = userName.substring(0, 2).toUpperCase();
+  const userRole = user?.role === 'admin' ? 'Administrador' : 'Estudiante'; 
+
+  const handleSave = async () => {
+    setSaveError(null);
+
+    // Validaciones locales antes de llamar al backend
+    if (editPassword || editConfirmPassword) {
+      if (!editPassword || !editConfirmPassword) {
+        setSaveError('Debes completar ambos campos de contraseña.');
+        return;
+      }
+      if (editPassword !== editConfirmPassword) {
+        setSaveError('Las contraseñas no coinciden.');
+        return;
+      }
+      if (editPassword.length < 8) {
+        setSaveError('La contraseña debe tener mínimo 8 caracteres.');
+        return;
+      }
+    }
+
     setIsSaving(true);
-    // Simula petición al backend
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      const dataToUpdate: any = {
+        nombre: editName,
+        email:  editEmail,
+      };
+      if (editPassword) {
+        dataToUpdate.nueva_password    = editPassword;
+        dataToUpdate.confirmar_password = editConfirmPassword;
+      }
+      await userService.updateProfile(dataToUpdate);
+
+      // Actualizar el estado global del store
+      setUser({ ...user!, nombre: editName, email: editEmail });
+
       setIsEditVisible(false);
-      setEditPassword(''); // Vaciamos por seguridad al cerrar
-    }, 1200);
+      setEditPassword('');
+      setEditConfirmPassword('');
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || 'Error al actualizar el perfil.';
+      setSaveError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const isPasswordWeak = editPassword.length > 0 && editPassword.length < 8;
+  const isPasswordWeak   = editPassword.length > 0 && editPassword.length < 8;
   const isPasswordStrong = editPassword.length >= 8;
+  const passwordMismatch = editConfirmPassword.length > 0 && editPassword !== editConfirmPassword;
+  const passwordMatch    = editConfirmPassword.length > 0 && editPassword === editConfirmPassword && isPasswordStrong;
 
   const handleLogout = () => {
     logout();
@@ -52,13 +127,17 @@ export default function ProfileScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.profileSection}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarText}>{userInitials}</Text>
-          </View>
-          <Text style={styles.userName}>{userName}</Text>
-          <Text style={styles.userEmail}>{user?.email ?? ''}</Text>
-        </View>
+        {isLoading ? (
+          <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 60 }} />
+        ) : (
+          <>
+            <View style={styles.profileSection}>
+              <View style={styles.avatarCircle}>
+                <Text style={styles.avatarText}>{userInitials}</Text>
+              </View>
+              <Text style={styles.userName}>{userName}</Text>
+              <Text style={styles.userEmail}>{editEmail}</Text>
+            </View>
 
         <View style={styles.badgeRow}>
           <View style={styles.roleBadge}>
@@ -116,6 +195,8 @@ export default function ProfileScreen() {
         </View>
 
         <View style={{ height: 32 }} />
+          </>
+        )}
       </ScrollView>
 
       {/* BOTTOM SHEET: Editar Perfil */}
@@ -157,16 +238,33 @@ export default function ProfileScreen() {
               <View style={styles.separator} />
 
               <InputField
-                label="Nueva Contraseña (Opcional)"
+                label="Nueva Contraseña (opcional)"
                 icon="lock"
                 value={editPassword}
                 onChangeText={setEditPassword}
                 secureTextEntry
                 placeholder="Escribe tu nueva clave"
-                error={isPasswordWeak ? 'Insegura: Mínimo 8 caracteres.' : undefined}
+                error={isPasswordWeak ? 'Insegura: mínimo 8 caracteres.' : undefined}
               />
               {isPasswordStrong && (
                 <Text style={styles.passwordSuccessText}>✓ Nivel de seguridad óptimo</Text>
+              )}
+
+              <InputField
+                label="Confirmar Nueva Contraseña"
+                icon="lock"
+                value={editConfirmPassword}
+                onChangeText={setEditConfirmPassword}
+                secureTextEntry
+                placeholder="Repite tu nueva clave"
+                error={passwordMismatch ? 'Las contraseñas no coinciden.' : undefined}
+              />
+              {passwordMatch && (
+                <Text style={styles.passwordSuccessText}>✓ Las contraseñas coinciden</Text>
+              )}
+
+              {saveError && (
+                <Text style={styles.errorText}>{saveError}</Text>
               )}
 
               <Button
@@ -293,11 +391,20 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   passwordSuccessText: {
-    color: '#059669', // Verde confirmación
+    color: '#059669',
     fontSize: 13,
     fontWeight: '600',
-    marginTop: -8, // Lo subo poquito hacia el input
+    marginTop: -8,
     marginBottom: 16,
     paddingHorizontal: 6,
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 4,
+    marginBottom: 12,
+    paddingHorizontal: 6,
+    textAlign: 'center',
   },
 });

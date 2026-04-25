@@ -4,16 +4,31 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Button, InputField } from '../../src/components/ui';
+import { authService } from '../../src/services/auth_service';
 import { Colors } from '../../src/styles/colors';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleRecover = () => {
-    // Si no hay spinner, hacemos el cambio visual al instante de éxito cuando presiona enviar
-    if(email.length > 3) {
-      setIsSuccess(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleRecover = async () => {
+    setError('');
+    setIsLoading(true);
+    try {
+      if(email.length > 3) {
+        await authService.recoverPassword(email);
+        setIsSuccess(true);
+      } else {
+        setError('Por favor, ingresa un correo válido.');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'No se pudo enviar el correo de recuperación.');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -51,10 +66,12 @@ export default function ForgotPasswordScreen() {
                   autoCapitalize="none"
                 />
               </View>
+              {error ? <Text style={{color: Colors.danger, marginBottom: 12, textAlign: 'center'}}>{error}</Text> : null}
 
               <Button
                 title="Enviar Enlace de Recuperación"
                 onPress={handleRecover}
+                isLoading={isLoading}
               />
             </Animated.View>
           ) : (

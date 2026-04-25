@@ -1,7 +1,11 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import React from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { userService } from '../src/services/user_service';
+import { WasteReport, wasteService } from '../src/services/waste_service';
+
 import {
+  ActivityIndicator,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -11,7 +15,63 @@ import {
 } from 'react-native';
 import { Colors } from '../src/styles/colors';
 
+const formatDate = (dateStr?: string): string => {
+  if (!dateStr) return 'Sin fecha';
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleString('es-CO', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return dateStr;
+  }
+};
+
 export default function ReportDetailScreen() {
+  const { id } = useLocalSearchParams();
+  const [report, setReport] = useState<WasteReport | null>(null);
+  const [type, setType] = useState<string | null>(null);
+  const [material, setMaterial] = useState<string | null>(null);
+  const [zone, setZone] = useState<string | null>(null);
+  const [size, setSize] = useState<string | null>(null);
+  const [reporter, setReporter] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReport = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+        const reportData = await wasteService.getReportById(Number(id));
+        setReport(reportData);
+        const [typeData, materialData, zoneData, sizeData] = await Promise.all([
+          wasteService.getTypeById(reportData.tipo_residuo_id),
+          wasteService.getMaterialById(reportData.material_id),
+          wasteService.getZoneById(reportData.zona_id),
+          wasteService.getSizeById(reportData.tamano_id),
+        ]);
+        setType(typeData.nombre_tipo);
+        setMaterial(materialData.nombre_material);
+        setZone(zoneData.nombre_zona);
+        setSize(sizeData.nombre_tamano);
+        try {
+          const userData = await userService.getUserById(reportData.usuario_id);
+          setReporter(userData.nombre || `Usuario #${reportData.usuario_id}`);
+        } catch {
+          setReporter(`Usuario #${reportData.usuario_id}`);
+        }
+      } catch (error) {
+        console.error("Error al obtener el reporte:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReport();
+  }, [id]); 
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Header */}
@@ -25,126 +85,130 @@ export default function ReportDetailScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-
-        {/* 1. Identificación */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleRow}>
-            <MaterialIcons name="fingerprint" size={22} color={Colors.primary} />
-            <Text style={styles.sectionTitle}>Identificación</Text>
-          </View>
-          <View style={styles.card}>
-            <View style={styles.cardRow}>
-              <Text style={styles.cardLabel}>Reporte ID</Text>
-              <Text style={styles.cardValueMono}>#REC-98234-AX</Text>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Cargando detalles...</Text>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* 1. Identificación */}
+          <View style={styles.section}>
+            <View style={styles.sectionTitleRow}>
+              <MaterialIcons name="fingerprint" size={22} color={Colors.primary} />
+              <Text style={styles.sectionTitle}>Identificación</Text>
             </View>
-            <View style={styles.cardDivider} />
-            <View style={styles.cardRow}>
-              <Text style={styles.cardLabel}>Fecha y Hora</Text>
-              <Text style={styles.cardValue}>24 Oct, 2023 • 14:30</Text>
-            </View>
-            <View style={styles.cardDivider} />
-            <View style={styles.cardRow}>
-              <Text style={styles.cardLabel}>Reportado por</Text>
-              <View style={styles.cardUserRow}>
-                <Text style={styles.cardValue}>Usuario de Prueba</Text>
-                <View style={styles.cardUserAvatar}>
-                  <MaterialIcons name="person" size={14} color={Colors.primary} />
+            <View style={styles.card}>
+              <View style={styles.cardRow}>
+                <Text style={styles.cardLabel}>ID</Text>
+                <Text style={styles.cardValueMono}>{report?.id}</Text>
+              </View>
+              <View style={styles.cardDivider} />
+              <View style={styles.cardRow}>
+                <Text style={styles.cardLabel}>Fecha y Hora</Text>
+                <Text style={styles.cardValue}>{formatDate(report?.fecha_reporte)}</Text>
+              </View>
+              <View style={styles.cardDivider} />
+              <View style={styles.cardRow}>
+                <Text style={styles.cardLabel}>Reportado por</Text>
+                <View style={styles.cardUserRow}>
+                  <View style={styles.cardUserAvatar}>
+                    <MaterialIcons name="person" size={14} color={Colors.primary} />
+                  </View>
+                  <Text style={styles.cardValue}>{reporter ?? `#${report?.usuario_id}`}</Text>
                 </View>
               </View>
             </View>
           </View>
-        </View>
 
-        {/* 2. Clasificación del residuo */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleRow}>
-            <MaterialIcons name="category" size={22} color={Colors.primary} />
-            <Text style={styles.sectionTitle}>Clasificación del residuo</Text>
-          </View>
-          <View style={styles.card}>
-            <View style={styles.classGrid}>
-              <View style={styles.classCell}>
-                <Text style={styles.classLabel}>TIPO</Text>
-                <View style={styles.classBadge}>
-                  <Text style={styles.classBadgeText}>Plásticos</Text>
+          {/* 2. Clasificación del residuo */}
+          <View style={styles.section}>
+            <View style={styles.sectionTitleRow}>
+              <MaterialIcons name="category" size={22} color={Colors.primary} />
+              <Text style={styles.sectionTitle}>Clasificación del residuo</Text>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.classGrid}>
+                <View style={styles.classCell}>
+                  <Text style={styles.classLabel}>TIPO</Text>
+                  <View style={styles.classBadge}>
+                    <Text style={styles.classBadgeText}>{type}</Text>
+                  </View>
                 </View>
-              </View>
-              <View style={styles.classCell}>
-                <Text style={styles.classLabel}>MATERIAL</Text>
-                <View style={styles.classMaterialRow}>
-                  <MaterialIcons name="recycling" size={18} color={Colors.primary} />
-                  <Text style={styles.classValue}>PET / HDPE</Text>
+                <View style={styles.classCell}>
+                  <Text style={styles.classLabel}>MATERIAL</Text>
+                  <View style={styles.classMaterialRow}>
+                    <MaterialIcons name="recycling" size={18} color={Colors.primary} />
+                    <Text style={styles.classValue}>{material}</Text>
+                  </View>
                 </View>
-              </View>
-              <View style={[styles.classCell, styles.classCellFull]}>
-                <Text style={styles.classLabel}>TAMAÑO ESTIMADO</Text>
-                <Text style={styles.classValue}>Mediano (2-5kg)</Text>
+                <View style={[styles.classCell, styles.classCellFull]}>
+                  <Text style={styles.classLabel}>TAMAÑO ESTIMADO</Text>
+                  <Text style={styles.classValue}>{size}</Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
 
-        {/* 3. Ubicación */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleRow}>
-            <MaterialIcons name="explore" size={22} color={Colors.primary} />
-            <Text style={styles.sectionTitle}>Ubicación</Text>
-          </View>
-          <View style={styles.card}>
-            <View style={styles.locationHeader}>
-              <View style={styles.locationIconWrapper}>
-                <MaterialIcons name="place" size={22} color={Colors.primary} />
-              </View>
-              <View>
-                <Text style={styles.locationName}>Zona Reserva</Text>
-                <Text style={styles.locationSub}>Sector Norte - Cuadrante B12</Text>
-              </View>
+          {/* 3. Ubicación */}
+          <View style={styles.section}>
+            <View style={styles.sectionTitleRow}>
+              <MaterialIcons name="explore" size={22} color={Colors.primary} />
+              <Text style={styles.sectionTitle}>Ubicación</Text>
             </View>
-            <View style={styles.cardDivider} />
-            <View style={styles.coordsGrid}>
-              <View style={styles.coordCell}>
-                <Text style={styles.classLabel}>COORDENADAS</Text>
-                <Text style={styles.cardValueMono}>19.4326° N{'\n'}99.1332° W</Text>
-              </View>
-              <View style={styles.coordCell}>
-                <Text style={styles.classLabel}>PRECISIÓN</Text>
-                <View style={styles.classMaterialRow}>
-                  <MaterialIcons name="gps-fixed" size={16} color={Colors.primary} />
-                  <Text style={styles.cardValue}>+/- 2.4 m</Text>
+            <View style={styles.card}>
+              <View style={styles.locationHeader}>
+                <View style={styles.locationIconWrapper}>
+                  <MaterialIcons name="place" size={22} color={Colors.primary} />
+                </View>
+                <View>
+                  <Text style={styles.locationName}>Zona: {zone}</Text>
+                  <Text style={styles.locationSub}>Localización registrada</Text>
                 </View>
               </View>
-              <View style={styles.coordCell}>
-                <Text style={styles.classLabel}>ALTITUD</Text>
-                <Text style={styles.cardValue}>2,240 msnm</Text>
+              <View style={styles.cardDivider} />
+              <View style={styles.coordsGrid}>
+                <View style={styles.coordCell}>
+                  <Text style={styles.classLabel}>COORDENADAS</Text>
+                  <Text style={styles.cardValueMono}>No especificada</Text>
+                </View>
+                <View style={styles.coordCell}>
+                  <Text style={styles.classLabel}>PRECISIÓN</Text>
+                  <View style={styles.classMaterialRow}>
+                    <MaterialIcons name="gps-fixed" size={16} color={Colors.primary} />
+                    <Text style={styles.cardValue}>No especificada</Text>
+                  </View>
+                </View>
+                <View style={styles.coordCell}>
+                  <Text style={styles.classLabel}>ALTITUD</Text>
+                  <Text style={styles.cardValue}>No especificada</Text>
+                </View>
               </View>
             </View>
-          </View>
-        </View>
+          </View> 
 
-        {/* 4. Descripción */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleRow}>
-            <MaterialIcons name="description" size={22} color={Colors.primary} />
-            <Text style={styles.sectionTitle}>Descripción</Text>
+          {/* 4. Descripción */}
+          <View style={styles.section}>
+            <View style={styles.sectionTitleRow}>
+              <MaterialIcons name="description" size={22} color={Colors.primary} />
+              <Text style={styles.sectionTitle}>Descripción</Text>
+            </View>
+            <View style={styles.descriptionBlock}>
+              <Text style={styles.descriptionText}>
+                {report?.descripcion || "Sin descripción proporcionada."}
+              </Text>
+            </View>
           </View>
-          <View style={styles.descriptionBlock}>
-            <Text style={styles.descriptionText}>
-              "Se localizó un cúmulo de envases plásticos cerca del cauce del río. El material
-              parece llevar varios meses en el lugar debido al desgaste solar. No se detectan
-              olores químicos, principalmente residuos domésticos."
-            </Text>
+
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerLabel}>RECIDRON · SISTEMA DE REPORTES</Text>
+            <Text style={styles.footerText}>Reporte #{id}</Text>
+            <Text style={styles.footerText}>{formatDate(report?.fecha_reporte)}</Text>
           </View>
-        </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerLabel}>INTERNAL REGISTRY SYSTEM</Text>
-          <Text style={styles.footerText}>Reference: ID-98234-AX-2023-V1</Text>
-          <Text style={styles.footerText}>Endpoint: api.recidron.io/v1/reports/fetch/98234</Text>
-        </View>
-
-      </ScrollView>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
@@ -153,6 +217,17 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.backgroundLight,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: Colors.primary,
+    fontWeight: '500',
   },
   header: {
     flexDirection: 'row',

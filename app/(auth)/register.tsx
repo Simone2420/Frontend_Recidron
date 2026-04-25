@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, Touchable
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Button, InputField } from '../../src/components/ui';
 import { Colors } from '../../src/styles/colors';
+import { authService } from '../../src/services/auth_service';
 
 export default function RegisterScreen() {
   const [fullName, setFullName] = useState('');
@@ -14,22 +15,35 @@ export default function RegisterScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     setError('');
+
+    if (!fullName || !studentCode || !email || !password) {
+      setError('Por favor, completa todos los campos para registrarte.');
+      return;
+    }
+
     setIsLoading(true);
 
-    // Mock API call Simulation
-    setTimeout(() => {
+    try {
+      // Mandar los datos que coincide con la estructura de un usuario (ajusta las propiedades en base a tu backend)
+      // El authService ya mapea full_name -> nombre automáticamente
+      await authService.register({
+        full_name: fullName,
+        student_code: studentCode,
+        email: email.toLowerCase(),
+        password: password
+      });
       setIsLoading(false);
-
-      if (!fullName || !studentCode || !email || !password) {
-        setError('Por favor, completa todos los campos para registrarte.');
-        return;
-      }
-
       // Volvemos exitosamente atrás (Login)
       router.back();
-    }, 1500);
+    } catch (err: any) {
+      setIsLoading(false);
+      console.error('Registration error:', err.response?.data || err.message);
+      // Mostramos el detalle real del backend si existe
+      const detail = err.response?.data?.detail;
+      setError(typeof detail === 'string' ? detail : 'Error al registrar la cuenta.');
+    }
   };
 
   return (

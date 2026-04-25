@@ -1,13 +1,14 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { StatCard } from '../../src/components/cards';
 import { Colors } from '../../src/styles/colors';
+import { userService } from '../../src/services/user_service';
+import { useAuth } from '../../src/store/authStore';
 
-// Datos mock — reemplazar con llamadas reales a la API cuando esté lista
-const STATS = [
+const FALLBACK_STATS = [
   { title: 'Total Reportes', value: '128', subtitle: '+12 este mes' },
   { title: 'Zonas Activas', value: '12', subtitle: '4 en monitoreo' },
   { title: 'Material Top', value: 'Plástico', subtitle: '45% del total' },
@@ -15,6 +16,32 @@ const STATS = [
 ];
 
 export default function UserHomeScreen() {
+  const { user } = useAuth();
+  const [stats, setStats] = useState(FALLBACK_STATS);
+  const [loading, setLoading] = useState(true);
+
+  // Definimos el nombre para el saludo (si no hay nombre, usa el email o 'Usuario')
+  const userName = user?.nombre || user?.email?.split('@')[0] || 'Usuario';
+  const userInitials = userName.substring(0, 2).toUpperCase();
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const data = await userService.getUserDashboard();
+        // Si tienes la data mapeada al formato:
+        if (data && data.stats) {
+           setStats(data.stats);
+        }
+      } catch (err) {
+        console.error('User stats fallback:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -29,7 +56,7 @@ export default function UserHomeScreen() {
           <View>
             <Text style={styles.welcomeText}>Bienvenido de vuelta</Text>
             <Text style={styles.greetingText}>
-              Hola, <Text style={styles.greetingName}>Usuario</Text>
+              Hola, <Text style={styles.greetingName}>{userName}</Text>
             </Text>
           </View>
         </Animated.View>
@@ -42,18 +69,21 @@ export default function UserHomeScreen() {
           <Animated.View entering={FadeInUp.duration(600).delay(200)}>
             <Text style={styles.sectionTitle}>Resumen de actividad</Text>
 
-            {/* Grid 2×2 de StatCards */}
-            <View style={styles.grid}>
-              {STATS.map((stat, index) => (
-                <View key={index} style={styles.gridItem}>
-                  <StatCard
-                    title={stat.title}
-                    value={stat.value}
-                    subtitle={stat.subtitle}
-                  />
-                </View>
-              ))}
-            </View>
+            {loading ? (
+               <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 24 }} />
+            ) : (
+              <View style={styles.grid}>
+                {stats.map((stat, index) => (
+                  <View key={index} style={styles.gridItem}>
+                    <StatCard
+                      title={stat.title}
+                      value={stat.value}
+                      subtitle={stat.subtitle}
+                    />
+                  </View>
+                ))}
+              </View>
+            )}
           </Animated.View>
         </ScrollView>
 
