@@ -18,7 +18,7 @@ import { Colors } from '../src/styles/colors';
 const formatDate = (dateStr?: string): string => {
   if (!dateStr) return 'Sin fecha';
   try {
-    const date = new Date(dateStr);
+    const date = new Date(dateStr.replace(' ', 'T') + 'Z');
     return date.toLocaleString('es-CO', {
       day: '2-digit',
       month: 'short',

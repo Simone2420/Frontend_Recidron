@@ -6,7 +6,7 @@ import { ReportCard } from '../../src/components/cards';
 import { Colors, WasteColors } from '../../src/styles/colors';
 import { wasteService, WasteReport } from '../../src/services/waste_service';
 import { userService } from '../../src/services/user_service';
-
+import { useAuth } from '../../src/store/authStore';
 const TYPE_FILTERS = ['Todos', 'Aprovechable', 'Peligroso', 'Orgánico', 'No Aprovechable'] as const;
 type FilterType = typeof TYPE_FILTERS[number] | 'Mis Reportes';
 
@@ -23,6 +23,9 @@ export default function ReportsScreen() {
   const [reports, setReports] = useState<any[]>([]); // Usamos any temporalmente para las nuevas propiedades del back
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     fetchReports();
@@ -90,19 +93,21 @@ export default function ReportsScreen() {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContainer}>
         {/* Filtro especial: Mis Reportes */}
-        <TouchableOpacity
-          style={[styles.filterChip, styles.filterChipMine, activeFilter === 'Mis Reportes' && styles.filterChipMineActive]}
-          onPress={() => setActiveFilter('Mis Reportes')}
-          activeOpacity={0.7}
-        >
-          <MaterialIcons
-            name="person"
-            size={14}
-            color={activeFilter === 'Mis Reportes' ? Colors.white : Colors.primary}
-            style={{ marginRight: 4 }}
-          />
-          <Text style={[styles.filterChipText, activeFilter === 'Mis Reportes' && styles.filterChipTextActive]}>Mis Reportes</Text>
-        </TouchableOpacity>
+        {!isAdmin && (
+          <TouchableOpacity
+            style={[styles.filterChip, styles.filterChipMine, activeFilter === 'Mis Reportes' && styles.filterChipMineActive]}
+            onPress={() => setActiveFilter('Mis Reportes')}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons
+              name="person"
+              size={14}
+              color={activeFilter === 'Mis Reportes' ? Colors.white : Colors.primary}
+              style={{ marginRight: 4 }}
+            />
+            <Text style={[styles.filterChipText, activeFilter === 'Mis Reportes' && styles.filterChipTextActive]}>Mis Reportes</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Filtros por tipo */}
         {TYPE_FILTERS.map((filter) => {
@@ -158,7 +163,7 @@ export default function ReportsScreen() {
               type={item.tipo_nombre as any}
               location={item.zona_nombre}
               material={item.material_nombre}
-              dateStr={item.fecha_reporte ? new Date(item.fecha_reporte.replace(' ', 'T')).toLocaleDateString() : 'Recientemente'}
+              dateStr={item.fecha_reporte ? new Date(item.fecha_reporte.replace(' ', 'T') + 'Z').toLocaleDateString() : 'Recientemente'}
               onPress={() => router.push({ pathname: '/report-detail', params: { id: item.id } })}
             />
           )}

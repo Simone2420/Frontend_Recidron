@@ -146,10 +146,12 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>REPORTES{'\n'}ENVIADOS</Text>
-            <Text style={styles.statValueGreen}>{reportCount}</Text>
-          </View>
+          {user?.role !== 'admin' && (
+            <View style={styles.statCard}>
+              <Text style={styles.statLabel}>REPORTES{'\n'}ENVIADOS</Text>
+              <Text style={styles.statValueGreen}>{reportCount}</Text>
+            </View>
+          )}
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>MIEMBRO{'\n'}DESDE</Text>
             <Text style={styles.statValueDark}>{memberSince}</Text>
@@ -170,19 +172,35 @@ export default function ProfileScreen() {
             </View>
             <MaterialIcons name="chevron-right" size={24} color={Colors.slate400} />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.optionItem}
-            onPress={() => router.push('/(tabs)/reports')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.optionLeft}>
-              <View style={styles.optionIconWrapper}>
-                <MaterialIcons name="description" size={22} color={Colors.primary} />
+          {user?.role === 'admin' ? (
+            <TouchableOpacity
+              style={styles.optionItem}
+              onPress={() => router.push('/admin-users')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.optionLeft}>
+                <View style={styles.optionIconWrapper}>
+                  <MaterialIcons name="people" size={22} color={Colors.primary} />
+                </View>
+                <Text style={styles.optionText}>Gestión de Usuarios y Roles</Text>
               </View>
-              <Text style={styles.optionText}>Mis Reportes</Text>
-            </View>
-            <MaterialIcons name="chevron-right" size={24} color={Colors.slate400} />
-          </TouchableOpacity>
+              <MaterialIcons name="chevron-right" size={24} color={Colors.slate400} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.optionItem}
+              onPress={() => router.push('/(tabs)/reports')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.optionLeft}>
+                <View style={styles.optionIconWrapper}>
+                  <MaterialIcons name="description" size={22} color={Colors.primary} />
+                </View>
+                <Text style={styles.optionText}>Mis Reportes</Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={24} color={Colors.slate400} />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.spacer} />

@@ -86,22 +86,6 @@ export default function UserHomeScreen() {
             )}
           </Animated.View>
         </ScrollView>
-
-        {/* ── FAB: Nuevo Reporte ── */}
-        <Animated.View
-          entering={FadeInUp.duration(600).delay(400)}
-          style={styles.fabContainer}
-          pointerEvents="box-none"
-        >
-          <TouchableOpacity
-            style={styles.fab}
-            activeOpacity={0.85}
-            onPress={() => router.push('/new-report')}
-          >
-            <MaterialIcons name="add" size={22} color={Colors.white} />
-            <Text style={styles.fabText}>Nuevo Reporte</Text>
-          </TouchableOpacity>
-        </Animated.View>
       </View>
     </SafeAreaView>
   );
@@ -172,33 +156,5 @@ const styles = StyleSheet.create({
   gridItem: {
     // cada item ocupa ~50% menos el gap
     width: '47.5%',
-  },
-
-  // ── FAB ──
-  fabContainer: {
-    position: 'absolute',
-    bottom: 90, // encima del tab bar
-    right: 24,
-    left: 24,
-    alignItems: 'flex-end',
-  },
-  fab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: 50,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    gap: 8,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  fabText: {
-    color: Colors.white,
-    fontWeight: 'bold',
-    fontSize: 15,
   },
 });
