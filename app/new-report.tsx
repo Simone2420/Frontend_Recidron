@@ -7,6 +7,7 @@ import { Button, InputField } from '../src/components/ui';
 import { Colors, WasteColors } from '../src/styles/colors';
 import { wasteService, WasteCatalogItem } from '../src/services/waste_service';
 import { useAuth } from '../src/store/authStore';
+import Toast from 'react-native-toast-message';
 
 export default function NewReportScreen() {
   const { user } = useAuth();
@@ -63,7 +64,11 @@ export default function NewReportScreen() {
 
   const handleSubmit = async () => {
     if (!user?.id || !selectedType || !selectedMaterial || !selectedZone || !selectedSize) {
-      alert('Por favor completa todos los campos obligatorios.');
+      Toast.show({
+        type: 'error',
+        text1: 'Campos incompletos',
+        text2: 'Por favor completa todos los campos obligatorios.',
+      });
       return;
     }
 

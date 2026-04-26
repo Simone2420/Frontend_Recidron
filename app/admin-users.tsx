@@ -6,6 +6,7 @@ import { Colors } from '../src/styles/colors';
 import { userService, UserProfile } from '../src/services/user_service';
 import { useAuth } from '../src/store/authStore';
 import api from '../src/services/base_service';
+import Toast from 'react-native-toast-message';
 
 export default function AdminUsersScreen() {
   const { user: currentUser, logout } = useAuth();
@@ -52,7 +53,11 @@ export default function AdminUsersScreen() {
 
     // Evitar revocar al administrador maestro identificándolo por su correo principal
     if (isCurrentlyAdmin && user.email === 'admin@recidron.com') {
-      Alert.alert("Acción no permitida", "No se pueden revocar los permisos del administrador maestro.");
+      Toast.show({
+        type: 'error',
+        text1: 'Acción no permitida',
+        text2: 'No se pueden revocar los permisos del administrador maestro.',
+      });
       return;
     }
 
@@ -91,10 +96,19 @@ export default function AdminUsersScreen() {
                   );
                 } else {
                   await fetchUsers();
+                  Toast.show({
+                    type: 'success',
+                    text1: '¡Rol actualizado!',
+                    text2: `Se han modificado los permisos de ${user.nombre || user.email}.`,
+                  });
                 }
               }
             } catch (error) {
-              Alert.alert("Error", "No se pudo actualizar el rol");
+              Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'No se pudo actualizar el rol. Inténtalo de nuevo.',
+              });
             } finally {
               setIsUpdatingRole(false);
             }
