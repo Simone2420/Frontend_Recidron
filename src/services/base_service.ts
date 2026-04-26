@@ -2,7 +2,8 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
 const api = axios.create({
-  // URL local de tu servidor FastAPI (basada en tu IP actual 10.245.176.241)
+  // URL para prueba local  ( basada en IP usar http://########:3000 )
+  // orignal del render https://recidron-backend-proyecto.onrender.com/
   baseURL: 'http://192.168.0.7:3000',
   timeout: 30000,
   headers: {

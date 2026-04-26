@@ -301,7 +301,7 @@ export default function AdminHomeScreen() {
                     location={report.zona_nombre || report.descripcion?.slice(0, 40) || 'Ubicación desconocida'}
                     time={
                       report.fecha_reporte
-                        ? new Date(report.fecha_reporte.replace(' ', 'T')).toLocaleString('es-CO', {
+                        ? new Date(report.fecha_reporte.replace(' ', 'T') + 'Z').toLocaleString('es-CO', {
                             day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
                           })
                         : 'Reciente'
@@ -317,24 +317,12 @@ export default function AdminHomeScreen() {
           </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.usersBtn}
-          activeOpacity={0.85}
-          onPress={() => router.push('/admin-users')}
-        >
-          <MaterialIcons name="people" size={22} color={Colors.white} />
-          <Text style={styles.usersBtnText}>Gestión de Usuarios y Roles</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity style={styles.pdfBtn} activeOpacity={0.85}>
           <MaterialIcons name="download" size={22} color={Colors.white} />
           <Text style={styles.pdfBtnText}>Descargar Reporte PDF</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
-          <MaterialIcons name="logout" size={20} color={Colors.danger} />
-          <Text style={styles.logoutText}>Cerrar Sesión</Text>
-        </TouchableOpacity>
+        <View style={{ height: 16 }} />
 
       </ScrollView>
     </SafeAreaView>
@@ -409,13 +397,6 @@ const styles = StyleSheet.create({
   recentBadgeText: { fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 0.3 },
   recentLocation: { fontSize: 12, fontWeight: '500', color: Colors.slate700 },
   recentTime: { fontSize: 10, color: Colors.slate400 },
-  usersBtn: {
-    marginHorizontal: 16, backgroundColor: Colors.slate800, borderRadius: 16,
-    paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    shadowColor: Colors.slate900, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2, shadowRadius: 8, elevation: 4,
-  },
-  usersBtnText: { fontSize: 15, fontWeight: 'bold', color: Colors.white },
   pdfBtn: {
     marginHorizontal: 16, backgroundColor: Colors.primary, borderRadius: 16,
     paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -423,10 +404,4 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2, shadowRadius: 8, elevation: 4,
   },
   pdfBtnText: { fontSize: 15, fontWeight: 'bold', color: Colors.white },
-  logoutBtn: {
-    marginHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    paddingVertical: 16, borderRadius: 16,
-    backgroundColor: Colors.dangerLight, borderWidth: 1, borderColor: '#C6282820',
-  },
-  logoutText: { fontSize: 15, fontWeight: 'bold', color: Colors.danger },
 });
