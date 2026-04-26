@@ -12,14 +12,27 @@ export default function RegisterScreen() {
   const [studentCode, setStudentCode] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleRegister = async () => {
     setError('');
 
-    if (!fullName || !studentCode || !email || !password) {
+    if (!fullName || !studentCode || !email || !password || !confirmPassword) {
       setError('Por favor, completa todos los campos para registrarte.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
+
+    if (password.length < 8) {
+      setError('La contraseña debe tener mínimo 8 caracteres.');
       return;
     }
 
@@ -93,7 +106,19 @@ export default function RegisterScreen() {
             icon="lock"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={!showPassword}
+            rightIcon={showPassword ? "visibility" : "visibility-off"}
+            onRightIconPress={() => setShowPassword(!showPassword)}
+          />
+          <InputField
+            label="Confirmar contraseña"
+            placeholder="Repite tu contraseña"
+            icon="lock"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry={!showConfirmPassword}
+            rightIcon={showConfirmPassword ? "visibility" : "visibility-off"}
+            onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
           />
           
           {error ? <Text style={styles.errorText}>{error}</Text> : null}

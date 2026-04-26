@@ -11,6 +11,7 @@ export default function LoginScreen() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -72,7 +73,9 @@ export default function LoginScreen() {
             icon="lock"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={!showPassword}
+            rightIcon={showPassword ? "visibility" : "visibility-off"}
+            onRightIconPress={() => setShowPassword(!showPassword)}
           />
           <View style={styles.forgotPasswordContainer}>
             <Button

@@ -1,17 +1,21 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
+import { StyleSheet, Text, TextInput, TextInputProps, View, TouchableOpacity } from 'react-native';
 import { Colors } from '../../styles/colors';
 
 export interface InputFieldProps extends TextInputProps {
   label?: string;
   icon?: keyof typeof MaterialIcons.glyphMap;
+  rightIcon?: keyof typeof MaterialIcons.glyphMap;
+  onRightIconPress?: () => void;
   error?: string;
 }
 
 export const InputField = ({
   label,
   icon,
+  rightIcon,
+  onRightIconPress,
   error,
   style,
   ...props
@@ -37,12 +41,26 @@ export const InputField = ({
           />
         )}
         <TextInput
-          style={[styles.input, icon && styles.inputWithIcon, style]}
+          style={[
+            styles.input, 
+            icon && styles.inputWithIcon, 
+            rightIcon && styles.inputWithRightIcon, 
+            style
+          ]}
           placeholderTextColor={Colors.slate400}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           {...props}
         />
+        {rightIcon && (
+          <TouchableOpacity onPress={onRightIconPress} style={styles.rightIconWrapper}>
+            <MaterialIcons
+              name={rightIcon}
+              size={22}
+              color={Colors.slate400}
+            />
+          </TouchableOpacity>
+        )}
       </View>
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
@@ -90,6 +108,16 @@ const styles = StyleSheet.create({
   },
   inputWithIcon: {
     paddingLeft: 48,
+  },
+  inputWithRightIcon: {
+    paddingRight: 48,
+  },
+  rightIconWrapper: {
+    position: 'absolute',
+    right: 16,
+    zIndex: 1,
+    height: '100%',
+    justifyContent: 'center',
   },
   errorText: {
     color: Colors.danger,
