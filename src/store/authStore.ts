@@ -7,6 +7,7 @@ interface AuthUser {
   email: string;
   nombre: string;
   role: Role;
+  rol_id?: number;
   token?: string;
 }
 
@@ -26,13 +27,17 @@ export const useAuth = create<AuthState>((set) => ({
   login: async (email, password) => {
     try {
       const data = await authService.login(email, password);
-      // El backend devuelve el nombre del rol (admin/autor)
-      const role: Role = data.rol === 'admin' ? 'admin' : 'user';
+      console.log('[AuthStore] Respuesta del backend:', data); // debug temporal
+      // El backend devuelve data.rol = nombre del rol ('admin' | 'autor')
+      // También comparamos por rol_id === 1 como respaldo
+      const esAdmin = data.rol === 'admin' || data.rol_id === 1;
+      const role: Role = esAdmin ? 'admin' : 'user';
       const userData: AuthUser = {
         id: data.id,
         email: data.email,
         nombre: data.nombre,
         role,
+        rol_id: data.rol_id,
         token: data.token
       };
 

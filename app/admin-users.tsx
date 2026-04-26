@@ -5,16 +5,35 @@ import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Activ
 import { Colors } from '../src/styles/colors';
 import { userService, UserProfile } from '../src/services/user_service';
 import { useAuth } from '../src/store/authStore';
+import api from '../src/services/base_service';
 
 export default function AdminUsersScreen() {
   const { user: currentUser, logout } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingRole, setIsUpdatingRole] = useState(false);
+  // IDs reales de los roles (vienen del backend, no se asumen)
+  const [adminRoleId, setAdminRoleId] = useState<number | null>(null);
+  const [autorRoleId, setAutorRoleId] = useState<number | null>(null);
 
   useEffect(() => {
+    fetchRoles();
     fetchUsers();
   }, []);
+
+  // Carga los IDs reales de roles desde el backend (nunca se asumen como 1 y 2)
+  const fetchRoles = async () => {
+    try {
+      const response = await api.get('/roles/');
+      const roles: any[] = response.data || [];
+      const adminRol = roles.find((r: any) => r.nombre_rol === 'admin');
+      const autorRol = roles.find((r: any) => r.nombre_rol === 'autor');
+      if (adminRol) setAdminRoleId(adminRol.id);
+      if (autorRol) setAutorRoleId(autorRol.id);
+    } catch (err) {
+      console.error('Error al obtener roles:', err);
+    }
+  };
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -28,22 +47,25 @@ export default function AdminUsersScreen() {
     }
   };
 
-  const handleToggleRole = async (user: UserProfile & { rol_id?: number }) => {
-    // Si rol_id === 1 es admin, lo bajamos a 2 (Autor). Si es 2, lo subimos a 1 (Admin).
-    const isCurrentlyAdmin = user.rol_id === 1;
+  const handleToggleRole = async (user: UserProfile & { rol_id?: number, nombre_rol?: string }) => {
+    const isCurrentlyAdmin = user.nombre_rol === 'admin';
 
-    // Evitar que cualquiera pueda revocar al administrador maestro (usualmente ID 1)
-    if (isCurrentlyAdmin && (user.id === 1 || user.id === '1')) {
+    // Evitar revocar al administrador maestro identificándolo por su correo principal
+    if (isCurrentlyAdmin && user.email === 'admin@recidron.com') {
       Alert.alert("Acción no permitida", "No se pueden revocar los permisos del administrador maestro.");
       return;
     }
 
+    // Usar los IDs reales obtenidos de la BD
+    const newRoleId = isCurrentlyAdmin
+      ? (autorRoleId ?? user.rol_id)  // bajar a autor
+      : (adminRoleId ?? user.rol_id); // subir a admin
+
     const actionText = isCurrentlyAdmin ? 'Revocar permisos de Administrador' : 'Ascender a Administrador';
-    const newRoleId = isCurrentlyAdmin ? 2 : 1;
 
     Alert.alert(
       "Confirmar Acción",
-      `¿Deseas ${actionText} a ${user.full_name || user.email}?`,
+      `¿Deseas ${actionText} a ${user.full_name || (user as any).nombre || user.email}?`,
       [
         { text: "Cancelar", style: "cancel" },
         { 
@@ -55,7 +77,6 @@ export default function AdminUsersScreen() {
               if (user.id) {
                 await userService.changeUserRole(typeof user.id === 'string' ? parseInt(user.id) : user.id, newRoleId);
                 
-                // Si el usuario que se está revocando es el mismo que tiene iniciada la sesión, cerrarla
                 if (isCurrentlyAdmin && (user.id === currentUser?.id || String(user.id) === String(currentUser?.id))) {
                   Alert.alert(
                     "Permisos revocados", 
@@ -69,7 +90,6 @@ export default function AdminUsersScreen() {
                     }]
                   );
                 } else {
-                  // Refrescar al terminar el cambio de otros usuarios
                   await fetchUsers();
                 }
               }
@@ -109,8 +129,8 @@ export default function AdminUsersScreen() {
                 <Text style={styles.emptyText}>No hay usuarios en el sistema</Text>
               </View>
             }
-            renderItem={({ item }: { item: UserProfile & { rol_id?: number, nombre?: string } }) => {
-              const isAdmin = item.rol_id === 1;
+            renderItem={({ item }: { item: UserProfile & { rol_id?: number, nombre_rol?: string, nombre?: string } }) => {
+              const isAdmin = item.nombre_rol === 'admin';
               const displayName = item.full_name || item.nombre || 'Sin Nombre';
               return (
                 <View style={[styles.userCard, isAdmin && styles.adminCard]}>
@@ -129,14 +149,16 @@ export default function AdminUsersScreen() {
                     </View>
                   </View>
                   
-                  <TouchableOpacity 
-                    style={[styles.actionBtn, isAdmin ? styles.btnRevocar : styles.btnAscender]}
-                    onPress={() => handleToggleRole(item)}
-                  >
-                    <Text style={[styles.actionBtnText, isAdmin && {color: Colors.danger}]}>
-                      {isAdmin ? 'Revocar Admin' : 'Hacer Admin'}
-                    </Text>
-                  </TouchableOpacity>
+                  {!(isAdmin && item.email === 'admin@recidron.com') && (
+                    <TouchableOpacity 
+                      style={[styles.actionBtn, isAdmin ? styles.btnRevocar : styles.btnAscender]}
+                      onPress={() => handleToggleRole(item)}
+                    >
+                      <Text style={[styles.actionBtnText, isAdmin && {color: Colors.danger}]}>
+                        {isAdmin ? 'Revocar Admin' : 'Hacer Admin'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               );
             }}
