@@ -4,7 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 const api = axios.create({
   // URL para prueba local  ( basada en IP usar http://########:3000 )
   // orignal del render https://recidron-backend-proyecto.onrender.com/
-  baseURL: 'http://192.168.0.7:3000',
+  baseURL: 'http://192.168.0.6:3000',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
