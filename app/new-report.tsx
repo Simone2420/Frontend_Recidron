@@ -27,6 +27,8 @@ export default function NewReportScreen() {
   const [selectedZone, setSelectedZone] = useState<number | null>(null);
   const [selectedSize, setSelectedSize] = useState<number | null>(null);
   const [description, setDescription] = useState('');
+  const [otherType, setOtherType] = useState('');
+  const [otherMaterial, setOtherMaterial] = useState('');
   const [photoTaken, setPhotoTaken] = useState(false);
 
   useEffect(() => {
@@ -74,13 +76,26 @@ export default function NewReportScreen() {
 
     setIsSubmitting(true);
     try {
+      let finalDescription = description.trim();
+      
+      const selectedTypeName = types.find(t => t.id === selectedType)?.nombre_tipo;
+      const selectedMaterialName = materials.find(m => m.id === selectedMaterial)?.nombre_material;
+      
+      const extras = [];
+      if (selectedTypeName === 'Otro' && otherType.trim()) extras.push(`Tipo Específico: ${otherType.trim()}`);
+      if (selectedMaterialName === 'Otro' && otherMaterial.trim()) extras.push(`Material Específico: ${otherMaterial.trim()}`);
+      
+      if (extras.length > 0) {
+        finalDescription = extras.join(' | ') + (finalDescription ? `\n\nDescripción adicional: ${finalDescription}` : '');
+      }
+
       await wasteService.createReport({
         usuario_id: user.id,
         tipo_residuo_id: selectedType,
         material_id: selectedMaterial,
         zona_id: selectedZone,
         tamano_id: selectedSize,
-        descripcion: description,
+        descripcion: finalDescription,
       });
       setIsSubmitting(false);
       router.replace('/(tabs)/reports');
@@ -144,18 +159,47 @@ export default function NewReportScreen() {
     );
   };
 
-  const renderStep1 = () => (
-    <Animated.View entering={FadeInRight} exiting={FadeInLeft} style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Clasificación</Text>
-      <Text style={styles.stepSubtitle}>Selecciona el tipo de residuo y el material principal.</Text>
+  const renderStep1 = () => {
+    const selectedTypeName = types.find(t => t.id === selectedType)?.nombre_tipo;
+    const selectedMaterialName = materials.find(m => m.id === selectedMaterial)?.nombre_material;
 
-      <Text style={styles.inputLabelLabel}>Tipo de Residuo</Text>
-      {renderCatalogList(types, selectedType, setSelectedType, "tipos")}
+    return (
+      <Animated.View entering={FadeInRight} exiting={FadeInLeft} style={styles.stepContainer}>
+        <Text style={styles.stepTitle}>Clasificación</Text>
+        <Text style={styles.stepSubtitle}>Selecciona el tipo de residuo y el material principal.</Text>
 
-      <Text style={[styles.inputLabelLabel, { marginTop: 20 }]}>Material</Text>
-      {renderCatalogList(materials, selectedMaterial, setSelectedMaterial, "materiales")}
-    </Animated.View>
-  );
+        <Text style={styles.inputLabelLabel}>Tipo de Residuo</Text>
+        {renderCatalogList(types, selectedType, setSelectedType, "tipos")}
+        
+        {selectedTypeName === 'Otro' && (
+          <Animated.View entering={FadeInRight} style={styles.otherInputContainer}>
+            <InputField
+              label="Especifica el Tipo de Residuo"
+              placeholder="Ej: Escombros, Electrónicos..."
+              icon="edit"
+              value={otherType}
+              onChangeText={setOtherType}
+            />
+          </Animated.View>
+        )}
+
+        <Text style={[styles.inputLabelLabel, { marginTop: 20 }]}>Material</Text>
+        {renderCatalogList(materials, selectedMaterial, setSelectedMaterial, "materiales")}
+        
+        {selectedMaterialName === 'Otro' && (
+          <Animated.View entering={FadeInRight} style={styles.otherInputContainer}>
+            <InputField
+              label="Especifica el Material"
+              placeholder="Ej: Llantas, Baterías, Tela..."
+              icon="edit"
+              value={otherMaterial}
+              onChangeText={setOtherMaterial}
+            />
+          </Animated.View>
+        )}
+      </Animated.View>
+    );
+  };
 
   const renderStep2 = () => (
     <Animated.View entering={FadeInRight} exiting={FadeInLeft} style={styles.stepContainer}>
@@ -314,4 +358,5 @@ const styles = StyleSheet.create({
   categoryCard: { width: '48%', padding: 16, borderRadius: 12, backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.slate200, flexDirection: 'row', alignItems: 'center', gap: 8 },
   categoryCardText: { fontSize: 13, color: Colors.slate700, flex: 1 },
   categoryColorDot: { width: 10, height: 10, borderRadius: 5 },
+  otherInputContainer: { marginTop: 12, paddingBottom: 8 },
 });
