@@ -22,6 +22,10 @@ export default function ReportsScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('Todos');
   const [reports, setReports] = useState<any[]>([]); // Usamos any temporalmente para las nuevas propiedades del back
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [skip, setSkip] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const LIMIT = 10;
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   const { user } = useAuth();
@@ -37,13 +41,37 @@ export default function ReportsScreen() {
   const fetchReports = async () => {
     setIsLoading(true);
     try {
-      const data = await wasteService.getAllReports();
+      const data = await wasteService.getAllReports(0, LIMIT);
       setReports(data || []);
+      setSkip(0);
+      setHasMore((data || []).length === LIMIT);
     } catch (e) {
       console.error('Error fetching reports:', e);
       setReports([]); // No mostramos mock por defecto si el usuario prefiere ver la realidad
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadMoreReports = async () => {
+    if (isFetchingMore || !hasMore || isLoading) return;
+    setIsFetchingMore(true);
+    const nextSkip = skip + LIMIT;
+    try {
+      const data = await wasteService.getAllReports(nextSkip, LIMIT);
+      if (data && data.length > 0) {
+        setReports((prev) => [...prev, ...data]);
+        setSkip(nextSkip);
+        if (data.length < LIMIT) {
+          setHasMore(false);
+        }
+      } else {
+        setHasMore(false);
+      }
+    } catch (e) {
+      console.error('Error fetching more reports:', e);
+    } finally {
+      setIsFetchingMore(false);
     }
   };
 
@@ -139,6 +167,13 @@ export default function ReportsScreen() {
           keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          onEndReached={loadMoreReports}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isFetchingMore ? (
+              <ActivityIndicator size="small" color={Colors.primary} style={{ marginVertical: 16 }} />
+            ) : null
+          }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <MaterialIcons
