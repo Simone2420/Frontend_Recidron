@@ -60,8 +60,8 @@ export const wasteService = {
     return response.data;
   },
 
-  getAllReports: async () => {
-    const response = await api.get('/reportes/');
+  getAllReports: async (skip: number = 0, limit: number = 10) => {
+    const response = await api.get(`/reportes/?skip=${skip}&limit=${limit}`);
     return response.data;
   },
 
