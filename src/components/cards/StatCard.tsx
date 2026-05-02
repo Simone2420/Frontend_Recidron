@@ -22,7 +22,7 @@ export const StatCard = ({ title, value, subtitle, onPress }: StatCardProps) => 
         <Text style={styles.statCardTitle}>{title}</Text>
       </View>
       <View style={styles.statCardBody}>
-        <Text style={styles.statCardValue} numberOfLines={1}>{value}</Text>
+        <Text style={styles.statCardValue} adjustsFontSizeToFit numberOfLines={1} minimumFontScale={0.5}>{value}</Text>
         <Text style={styles.statCardSubtitle}>{subtitle}</Text>
       </View>
     </Container>
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   },
   statCardValue: {
     color: Colors.slate900,
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 'bold',
     letterSpacing: -0.5,
   },

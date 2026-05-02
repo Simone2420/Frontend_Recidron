@@ -32,13 +32,15 @@ export default function ReportsScreen() {
   const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
+    if (!user) return;
     fetchReports();
     userService.getProfile()
       .then((profile) => setCurrentUserId(Number(profile.id)))
       .catch(() => setCurrentUserId(null));
-  }, []);
+  }, [user]);
 
   const fetchReports = async () => {
+    if (!user) return;
     setIsLoading(true);
     try {
       const data = await wasteService.getAllReports(0, LIMIT);
@@ -119,39 +121,47 @@ export default function ReportsScreen() {
         </View>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContainer}>
-        {/* Filtro especial: Mis Reportes */}
-        {!isAdmin && (
-          <TouchableOpacity
-            style={[styles.filterChip, styles.filterChipMine, activeFilter === 'Mis Reportes' && styles.filterChipMineActive]}
-            onPress={() => setActiveFilter('Mis Reportes')}
-            activeOpacity={0.7}
-          >
-            <MaterialIcons
-              name="person"
-              size={14}
-              color={activeFilter === 'Mis Reportes' ? Colors.white : Colors.primary}
-              style={{ marginRight: 4 }}
-            />
-            <Text style={[styles.filterChipText, activeFilter === 'Mis Reportes' && styles.filterChipTextActive]}>Mis Reportes</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Filtros por tipo */}
-        {TYPE_FILTERS.map((filter) => {
-          const isActive = activeFilter === filter;
-          return (
+      <View style={styles.filtersWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filtersContainer}
+          style={{ overflow: 'visible' }}
+        >
+          {/* Filtro especial: Mis Reportes */}
+          {!isAdmin && (
             <TouchableOpacity
-              key={filter}
-              style={[styles.filterChip, isActive && styles.filterChipActive]}
-              onPress={() => setActiveFilter(filter)}
+              style={[styles.filterChip, styles.filterChipMine, activeFilter === 'Mis Reportes' && styles.filterChipMineActive]}
+              onPress={() => setActiveFilter('Mis Reportes')}
               activeOpacity={0.7}
             >
-              <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>{filter}</Text>
+              <MaterialIcons
+                name="person"
+                size={14}
+                color={activeFilter === 'Mis Reportes' ? Colors.white : Colors.primary}
+                style={{ marginRight: 4 }}
+              />
+              <Text style={[styles.filterChipText, activeFilter === 'Mis Reportes' && styles.filterChipTextActive]}>Mis Reportes</Text>
             </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+          )}
+
+          {/* Filtros por tipo */}
+          {TYPE_FILTERS.map((filter) => {
+            const isActive = activeFilter === filter;
+            return (
+              <TouchableOpacity
+                key={filter}
+                style={[styles.filterChip, isActive && styles.filterChipActive]}
+                onPress={() => setActiveFilter(filter)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>{filter}</Text>
+              </TouchableOpacity>
+            );
+          })}
+          <View style={{ width: 16 }} />
+        </ScrollView>
+      </View>
 
       <View style={styles.resultsRow}>
         <Text style={styles.resultsText}>
@@ -222,11 +232,13 @@ const styles = StyleSheet.create({
   },
   searchIcon: { marginRight: 4 },
   searchInput: { flex: 1, fontSize: 15, color: Colors.slate900, height: '100%' },
-  filtersContainer: { paddingHorizontal: 16, paddingVertical: 8, gap: 8 },
+  filtersWrapper: { paddingVertical: 4 },
+  filtersContainer: { paddingHorizontal: 16, paddingVertical: 4, alignItems: 'center' },
   filterChip: {
-    height: 36, paddingHorizontal: 20, borderRadius: 999,
+    height: 36, paddingHorizontal: 16, borderRadius: 999,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: Colors.primaryLight, borderWidth: 1, borderColor: Colors.primaryBorder,
+    marginRight: 8, flexShrink: 0,
   },
   filterChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   filterChipText: { fontSize: 13, fontWeight: '500', color: Colors.primary },

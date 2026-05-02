@@ -24,6 +24,7 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     const fetchProfileData = async () => {
+      if (!user) return;
       try {
         const profile = await userService.getProfile();
         setEditName(profile.nombre || 'Usuario');
