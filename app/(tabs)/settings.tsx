@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
 import { useAuth } from '../../src/store/authStore';
-import { Colors } from '../../src/styles/colors';
 import { useTheme } from '../../src/styles/theme';
 
 export default function SettingsScreen() {
@@ -76,10 +75,10 @@ export default function SettingsScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.settingRowLeft}>
-              <View style={[styles.settingIconBox, { backgroundColor: Colors.dangerLight }]}>
-                <MaterialIcons name="logout" size={20} color={Colors.danger} />
+              <View style={[styles.settingIconBox, { backgroundColor: theme.dangerLight }]}>
+                <MaterialIcons name="logout" size={20} color={theme.danger} />
               </View>
-              <Text style={[styles.settingLabel, { color: Colors.danger, fontWeight: 'bold' }]}>Cerrar Sesión</Text>
+              <Text style={[styles.settingLabel, { color: theme.danger, fontWeight: 'bold' }]}>Cerrar Sesión</Text>
             </View>
           </TouchableOpacity>
         </View>

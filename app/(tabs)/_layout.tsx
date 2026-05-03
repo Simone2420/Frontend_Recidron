@@ -4,7 +4,6 @@ import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/store/authStore';
-import { Colors } from '../../src/styles/colors';
 import { useTheme } from '../../src/styles/theme';
 
 const CustomCreateButton = ({ onPress }: any) => {

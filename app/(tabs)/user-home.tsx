@@ -1,16 +1,19 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { StatCard } from '../../src/components/cards';
-import { Colors } from '../../src/styles/colors';
+import { useTheme } from '../../src/styles/theme';
 import { userService } from '../../src/services/user_service';
 import { wasteService } from '../../src/services/waste_service';
 import { useAuth } from '../../src/store/authStore';
 
 export default function UserHomeScreen() {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const { user } = useAuth();
   const [gridStats, setGridStats] = useState<{ title: string; value: string; subtitle: string }[]>([]);
   const [rankStat, setRankStat] = useState<{ value: string; subtitle: string } | null>(null);
@@ -81,7 +84,7 @@ export default function UserHomeScreen() {
           style={styles.header}
         >
           <View style={styles.logoBox}>
-            <MaterialIcons name="energy-savings-leaf" size={28} color={Colors.primary} />
+            <MaterialIcons name="energy-savings-leaf" size={28} color={theme.primary} />
           </View>
           <View>
             <Text style={styles.welcomeText}>Bienvenido de vuelta</Text>
@@ -100,7 +103,7 @@ export default function UserHomeScreen() {
             <Text style={styles.sectionTitle}>Resumen de actividad</Text>
 
             {loading ? (
-              <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 24 }} />
+              <ActivityIndicator size="large" color={theme.primary} style={{ marginTop: 24 }} />
             ) : (
               <>
                 {/* ── Tarjeta ancha: Mi Rango ── */}
@@ -108,7 +111,7 @@ export default function UserHomeScreen() {
                   <View style={styles.rankCard}>
                     <View style={styles.rankCardLeft}>
                       <View style={styles.rankIconBox}>
-                        <MaterialIcons name="workspace-premium" size={28} color={Colors.primary} />
+                        <MaterialIcons name="workspace-premium" size={28} color={theme.primary} />
                       </View>
                       <View>
                         <Text style={styles.rankLabel}>Mi Rango</Text>
@@ -122,7 +125,7 @@ export default function UserHomeScreen() {
                       activeOpacity={0.7}
                     >
                       <Text style={styles.rankBadgeText}>Ver perfil</Text>
-                      <MaterialIcons name="chevron-right" size={16} color={Colors.primary} />
+                      <MaterialIcons name="chevron-right" size={16} color={theme.primary} />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -148,9 +151,9 @@ export default function UserHomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: Colors.backgroundLight },
-  container: { flex: 1, backgroundColor: Colors.backgroundLight },
+const createStyles = (theme: any) => StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: theme.backgroundLight },
+  container: { flex: 1, backgroundColor: theme.backgroundLight },
 
   // ── Header ──
   header: {
@@ -159,24 +162,24 @@ const styles = StyleSheet.create({
   },
   logoBox: {
     width: 48, height: 48, borderRadius: 12,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     alignItems: 'center', justifyContent: 'center',
   },
-  welcomeText: { fontSize: 13, color: Colors.slate500, fontWeight: '500' },
-  greetingText: { fontSize: 22, fontWeight: 'bold', color: Colors.slate900, lineHeight: 28 },
-  greetingName: { color: Colors.primary },
+  welcomeText: { fontSize: 13, color: theme.slate500, fontWeight: '500' },
+  greetingText: { fontSize: 22, fontWeight: 'bold', color: theme.slate900, lineHeight: 28 },
+  greetingName: { color: theme.primary },
 
   // ── Scroll ──
   scrollContent: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 120 },
   sectionTitle: {
-    fontSize: 18, fontWeight: 'bold', color: Colors.slate900,
+    fontSize: 18, fontWeight: 'bold', color: theme.slate900,
     marginBottom: 16, marginTop: 8,
   },
 
   // ── Tarjeta ancha: Mi Rango ──
   rankCard: {
-    backgroundColor: Colors.white, borderRadius: 16,
-    borderWidth: 1, borderColor: Colors.primaryBorder,
+    backgroundColor: theme.white, borderRadius: 16,
+    borderWidth: 1, borderColor: theme.primaryBorder,
     paddingHorizontal: 16, paddingVertical: 14,
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', marginBottom: 14,
@@ -184,21 +187,21 @@ const styles = StyleSheet.create({
   rankCardLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   rankIconBox: {
     width: 48, height: 48, borderRadius: 12,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     alignItems: 'center', justifyContent: 'center',
   },
   rankLabel: {
-    fontSize: 11, color: Colors.slate500, fontWeight: '600',
+    fontSize: 11, color: theme.slate500, fontWeight: '600',
     textTransform: 'uppercase', letterSpacing: 0.5,
   },
-  rankValue: { fontSize: 18, fontWeight: 'bold', color: Colors.slate900, marginTop: 2 },
-  rankSubtitle: { fontSize: 11, color: Colors.primary, fontWeight: '500', marginTop: 1 },
+  rankValue: { fontSize: 18, fontWeight: 'bold', color: theme.slate900, marginTop: 2 },
+  rankSubtitle: { fontSize: 11, color: theme.primary, fontWeight: '500', marginTop: 1 },
   rankBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 2,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999,
   },
-  rankBadgeText: { fontSize: 12, color: Colors.primary, fontWeight: '600' },
+  rankBadgeText: { fontSize: 12, color: theme.primary, fontWeight: '600' },
 
   // ── Grid 2×2 ──
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
