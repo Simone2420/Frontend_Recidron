@@ -1,7 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Button, InputField } from '../../src/components/ui';
 import { authService } from '../../src/services/auth_service';

@@ -1,7 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, Platform } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { useAuth } from '../../src/store/authStore';
 import { Colors } from '../../src/styles/colors';
 import { useTheme } from '../../src/styles/theme';

@@ -1,7 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState, useEffect } from 'react';
-import { FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { ReportCard } from '../../src/components/cards';
 import { Colors, WasteColors } from '../../src/styles/colors';
 import { wasteService, WasteReport } from '../../src/services/waste_service';

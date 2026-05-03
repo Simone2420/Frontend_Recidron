@@ -2,6 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs, router } from 'expo-router';
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/store/authStore';
 import { Colors } from '../../src/styles/colors';
 import { useTheme } from '../../src/styles/theme';
@@ -43,6 +44,7 @@ export default function TabsLayout() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -54,8 +56,8 @@ export default function TabsLayout() {
           borderTopWidth: 1,
           borderTopColor: theme.slate200,
           backgroundColor: theme.white,
-          height: 60,
-          paddingBottom: 8,
+          height: 60 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
           paddingTop: 8,
         },
         tabBarLabelStyle: {

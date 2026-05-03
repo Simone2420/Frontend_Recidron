@@ -5,14 +5,9 @@ import { userService } from '../src/services/user_service';
 import { WasteReport, wasteService } from '../src/services/waste_service';
 
 import {
-  ActivityIndicator,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+  ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { Colors } from '../src/styles/colors';
 
 const formatDate = (dateStr?: string): string => {

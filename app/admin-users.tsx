@@ -1,7 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState, useEffect } from 'react';
-import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Alert, TextInput, Modal, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Alert, TextInput, Modal, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { Colors } from '../src/styles/colors';
 import { userService, UserProfile } from '../src/services/user_service';
 import { useAuth } from '../src/store/authStore';
