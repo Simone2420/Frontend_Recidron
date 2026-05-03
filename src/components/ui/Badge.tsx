@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../../styles/theme';
 
 export interface BadgeProps {
   label: string;
@@ -8,15 +8,21 @@ export interface BadgeProps {
   bgHex?: string;
 }
 
-export const Badge = ({ label, colorHex = Colors.primary, bgHex = Colors.primaryLight }: BadgeProps) => {
+export const Badge = ({ label, colorHex, bgHex }: BadgeProps) => {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  
+  const finalColor = colorHex || theme.primary;
+  const finalBgColor = bgHex || theme.primaryLight;
+
   return (
-    <View style={[styles.badgeContainer, { backgroundColor: bgHex }]}>
-      <Text style={[styles.badgeText, { color: colorHex }]}>{label}</Text>
+    <View style={[styles.badgeContainer, { backgroundColor: finalBgColor }]}>
+      <Text style={[styles.badgeText, { color: finalColor }]}>{label}</Text>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   badgeContainer: {
     paddingHorizontal: 8,
     paddingVertical: 4,

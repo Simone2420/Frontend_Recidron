@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, TouchableOpacity, TouchableOpacityProps } from 'react-native';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../../styles/theme';
 
 export interface IconButtonProps extends TouchableOpacityProps {
   icon: keyof typeof MaterialIcons.glyphMap;
@@ -13,11 +13,15 @@ export interface IconButtonProps extends TouchableOpacityProps {
 export const IconButton = ({
   icon,
   size = 24,
-  color = Colors.slate700,
+  color,
   bgColor = 'transparent',
   style,
   ...props
 }: IconButtonProps) => {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const finalColor = color || theme.slate700;
+
   return (
     <TouchableOpacity
       style={[
@@ -28,12 +32,12 @@ export const IconButton = ({
       activeOpacity={0.7}
       {...props}
     >
-      <MaterialIcons name={icon} size={size} color={color} />
+      <MaterialIcons name={icon} size={size} color={finalColor} />
     </TouchableOpacity>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   iconBtnContainer: {
     width: 40,
     height: 40,
