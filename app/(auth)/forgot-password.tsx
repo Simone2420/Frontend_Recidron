@@ -1,14 +1,17 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Button, InputField } from '../../src/components/ui';
 import { authService } from '../../src/services/auth_service';
-import { Colors } from '../../src/styles/colors';
+import { useTheme } from '../../src/styles/theme';
 
 export default function ForgotPasswordScreen() {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const [email, setEmail] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -41,7 +44,7 @@ export default function ForgotPasswordScreen() {
       <SafeAreaView style={{ flex: 1 }}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <MaterialIcons name="arrow-back" size={24} color={Colors.slate900} />
+            <MaterialIcons name="arrow-back" size={24} color={theme.slate900} />
           </TouchableOpacity>
         </View>
 
@@ -49,7 +52,7 @@ export default function ForgotPasswordScreen() {
           {!isSuccess ? (
             <Animated.View entering={FadeInDown.duration(600)} style={styles.formSection}>
               <View style={styles.iconCircle}>
-                <MaterialIcons name="lock-reset" size={48} color={Colors.primary} />
+                <MaterialIcons name="lock-reset" size={48} color={theme.primary} />
               </View>
               <Text style={styles.title}>Recuperar Acceso</Text>
               <Text style={styles.subtitle}>
@@ -67,7 +70,7 @@ export default function ForgotPasswordScreen() {
                   autoCapitalize="none"
                 />
               </View>
-              {error ? <Text style={{color: Colors.danger, marginBottom: 12, textAlign: 'center'}}>{error}</Text> : null}
+              {error ? <Text style={{color: theme.danger, marginBottom: 12, textAlign: 'center'}}>{error}</Text> : null}
 
               <Button
                 title="Enviar Enlace de Recuperación"
@@ -78,7 +81,7 @@ export default function ForgotPasswordScreen() {
           ) : (
             <Animated.View entering={FadeIn.duration(800)} style={styles.successSection}>
               <View style={styles.successCircle}>
-                <MaterialIcons name="mark-email-read" size={56} color={Colors.white} />
+                <MaterialIcons name="mark-email-read" size={56} color={theme.white} />
               </View>
               <Text style={styles.successTitle}>¡Revisa tu buzón!</Text>
               <Text style={styles.successSubtitle}>
@@ -87,7 +90,7 @@ export default function ForgotPasswordScreen() {
               </Text>
 
               <View style={styles.infoBox}>
-                <MaterialIcons name="info-outline" size={20} color={Colors.primary} />
+                <MaterialIcons name="info-outline" size={20} color={theme.primary} />
                 <Text style={styles.infoText}>
                   El enlace expirará de tu buzón universitario en 15 minutos por tu seguridad.
                 </Text>
@@ -106,10 +109,10 @@ export default function ForgotPasswordScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.backgroundLight,
+    backgroundColor: theme.backgroundLight,
   },
   header: {
     paddingHorizontal: 16,
@@ -120,9 +123,9 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.white,
+    backgroundColor: theme.white,
     borderRadius: 20,
-    shadowColor: Colors.slate900,
+    shadowColor: theme.slate900,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -141,7 +144,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
@@ -149,12 +152,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.slate900,
+    color: theme.slate900,
     marginBottom: 12,
   },
   subtitle: {
     fontSize: 15,
-    color: Colors.slate500,
+    color: theme.slate500,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 32,
@@ -174,11 +177,11 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: Colors.primary,
+    backgroundColor: theme.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
-    shadowColor: Colors.primary,
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
@@ -187,12 +190,12 @@ const styles = StyleSheet.create({
   successTitle: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: Colors.slate900,
+    color: theme.slate900,
     marginBottom: 12,
   },
   successSubtitle: {
     fontSize: 15,
-    color: Colors.slate500,
+    color: theme.slate500,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
@@ -200,12 +203,12 @@ const styles = StyleSheet.create({
   successEmailText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: Colors.slate900,
+    color: theme.slate900,
   },
   infoBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     padding: 16,
     borderRadius: 12,
     marginBottom: 32,
@@ -214,7 +217,7 @@ const styles = StyleSheet.create({
   infoText: {
     flex: 1,
     fontSize: 13,
-    color: Colors.primary,
+    color: theme.primary,
     fontWeight: '500',
     lineHeight: 18,
   },
