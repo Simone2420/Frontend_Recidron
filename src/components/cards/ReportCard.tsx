@@ -1,7 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors, WasteColors } from '../../styles/colors';
+import { useTheme } from '../../styles/theme';
+import { WasteColors } from '../../styles/colors';
 import { Badge } from '../ui';
 
 export interface ReportCardProps {
@@ -13,6 +14,8 @@ export interface ReportCardProps {
 }
 
 export const ReportCard = ({ type, location, material, dateStr, onPress }: ReportCardProps) => {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const colors = WasteColors[type] || WasteColors['No Aprovechable'];
 
   return (
@@ -28,7 +31,7 @@ export const ReportCard = ({ type, location, material, dateStr, onPress }: Repor
         <Text style={styles.reportCardLocation} numberOfLines={1}>{location}</Text>
         <Text style={styles.reportCardMaterial} numberOfLines={1}>Material: {material}</Text>
         <View style={styles.reportCardFooter}>
-          <MaterialIcons name="event" size={14} color={Colors.slate400} />
+          <MaterialIcons name="event" size={14} color={theme.slate400} />
           <Text style={styles.reportCardDate}>{dateStr}</Text>
         </View>
       </View>
@@ -36,15 +39,15 @@ export const ReportCard = ({ type, location, material, dateStr, onPress }: Repor
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   reportCardContainer: {
-    backgroundColor: Colors.white,
+    backgroundColor: theme.white,
     borderRadius: 16,
     overflow: 'hidden',
-    borderColor: Colors.slate100,
+    borderColor: theme.slate100,
     borderWidth: 1,
     marginBottom: 16,
-    shadowColor: Colors.slate900,
+    shadowColor: theme.slate900,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -61,12 +64,12 @@ const styles = StyleSheet.create({
   reportCardLocation: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: Colors.slate900,
+    color: theme.slate900,
     marginBottom: 4,
   },
   reportCardMaterial: {
     fontSize: 14,
-    color: Colors.slate500,
+    color: theme.slate500,
     marginBottom: 12,
   },
   reportCardFooter: {
@@ -75,7 +78,7 @@ const styles = StyleSheet.create({
   },
   reportCardDate: {
     fontSize: 12,
-    color: Colors.slate400,
+    color: theme.slate400,
     marginLeft: 6,
   },
 });

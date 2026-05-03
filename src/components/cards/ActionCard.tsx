@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../../styles/theme';
 
 export interface ActionCardProps {
   title: string;
@@ -10,6 +10,9 @@ export interface ActionCardProps {
 }
 
 export const ActionCard = ({ title, icon, onPress }: ActionCardProps) => {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   return (
     <TouchableOpacity
       style={styles.actionCardContainer}
@@ -17,21 +20,21 @@ export const ActionCard = ({ title, icon, onPress }: ActionCardProps) => {
       onPress={onPress}
     >
       <View style={styles.actionCardIconWrapper}>
-        <MaterialIcons name={icon} size={24} color={Colors.primary} />
+        <MaterialIcons name={icon} size={24} color={theme.primary} />
       </View>
       <Text style={styles.actionCardTitle}>{title}</Text>
     </TouchableOpacity>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   actionCardContainer: {
-    backgroundColor: Colors.white,
+    backgroundColor: theme.white,
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderColor: Colors.slate200,
+    borderColor: theme.slate200,
     borderWidth: 1,
     borderStyle: 'dashed',
   },
@@ -39,7 +42,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
@@ -47,6 +50,6 @@ const styles = StyleSheet.create({
   actionCardTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.slate700,
+    color: theme.slate700,
   },
 });
