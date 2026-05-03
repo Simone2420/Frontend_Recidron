@@ -1,15 +1,18 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Alert, TextInput, Modal, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
-import { Colors } from '../src/styles/colors';
+import { useTheme } from '../src/styles/theme';
 import { userService, UserProfile } from '../src/services/user_service';
 import { useAuth } from '../src/store/authStore';
 import api from '../src/services/base_service';
 import Toast from 'react-native-toast-message';
 
 export default function AdminUsersScreen() {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const { user: currentUser, logout } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -201,18 +204,18 @@ export default function AdminUsersScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <MaterialIcons name="arrow-back" size={24} color={Colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={theme.white} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Gestión de Usuarios</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <View style={styles.searchContainer}>
-        <MaterialIcons name="search" size={20} color={Colors.slate400} style={styles.searchIcon} />
+        <MaterialIcons name="search" size={20} color={theme.slate400} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="Buscar por nombre o correo..."
-          placeholderTextColor={Colors.slate400}
+          placeholderTextColor={theme.slate400}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -220,7 +223,7 @@ export default function AdminUsersScreen() {
 
       <View style={styles.content}>
         {isLoading ? (
-          <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color={theme.primary} style={{ marginTop: 40 }} />
         ) : (
           <FlatList
             data={filteredUsers}
@@ -229,7 +232,7 @@ export default function AdminUsersScreen() {
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <MaterialIcons name="people-outline" size={48} color={Colors.slate200} />
+                <MaterialIcons name="people-outline" size={48} color={theme.slate200} />
                 <Text style={styles.emptyText}>No hay usuarios en el sistema</Text>
               </View>
             }
@@ -250,13 +253,13 @@ export default function AdminUsersScreen() {
                       <Text style={styles.userEmail}>{item.email}</Text>
                       <View style={{flexDirection: 'row', gap: 6}}>
                         <View style={[styles.roleBadge, isAdmin ? styles.roleBadgeAdmin : styles.roleBadgeAutor]}>
-                          <Text style={[styles.roleText, isAdmin && {color: Colors.white}]}>
+                          <Text style={[styles.roleText, isAdmin && {color: theme.white}]}>
                             {isAdmin ? 'ADMINISTRADOR' : 'ESTUDIANTE / AUTOR'}
                           </Text>
                         </View>
                         {item.es_activo === false && (
-                          <View style={[styles.roleBadge, {backgroundColor: Colors.dangerLight}]}>
-                            <Text style={[styles.roleText, {color: Colors.danger}]}>INACTIVO</Text>
+                          <View style={[styles.roleBadge, {backgroundColor: theme.dangerLight}]}>
+                            <Text style={[styles.roleText, {color: theme.danger}]}>INACTIVO</Text>
                           </View>
                         )}
                       </View>
@@ -278,8 +281,8 @@ export default function AdminUsersScreen() {
                           setIsEditModalVisible(true);
                         }}
                       >
-                        <MaterialIcons name="edit" size={16} color={Colors.white} />
-                        <Text style={[styles.actionBtnText, {color: Colors.white, marginLeft: 4}]}>Editar</Text>
+                        <MaterialIcons name="edit" size={16} color={theme.white} />
+                        <Text style={[styles.actionBtnText, {color: theme.white, marginLeft: 4}]}>Editar</Text>
                       </TouchableOpacity>
                     )}
 
@@ -288,7 +291,7 @@ export default function AdminUsersScreen() {
                         style={[styles.actionBtn, isAdmin ? styles.btnRevocar : styles.btnAscender]}
                         onPress={() => handleToggleRole(item)}
                       >
-                        <Text style={[styles.actionBtnText, isAdmin && {color: Colors.danger}]}>
+                        <Text style={[styles.actionBtnText, isAdmin && {color: theme.danger}]}>
                           {isAdmin ? 'Revocar' : 'Hacer Admin'}
                         </Text>
                       </TouchableOpacity>
@@ -299,7 +302,7 @@ export default function AdminUsersScreen() {
                         style={[styles.actionBtn, item.es_activo === false ? styles.btnAscender : styles.btnRevocar]}
                         onPress={() => handleToggleActive(item)}
                       >
-                        <Text style={[styles.actionBtnText, item.es_activo === false ? {color: Colors.primary} : {color: Colors.danger}]}>
+                        <Text style={[styles.actionBtnText, item.es_activo === false ? {color: theme.primary} : {color: theme.danger}]}>
                           {item.es_activo === false ? 'Activar' : 'Desactivar'}
                         </Text>
                       </TouchableOpacity>
@@ -314,7 +317,7 @@ export default function AdminUsersScreen() {
 
       {isUpdatingRole && (
         <View style={styles.overlay}>
-          <ActivityIndicator size="large" color={Colors.white} />
+          <ActivityIndicator size="large" color={theme.white} />
         </View>
       )}
 
@@ -332,7 +335,7 @@ export default function AdminUsersScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Editar Usuario</Text>
               <TouchableOpacity onPress={() => setIsEditModalVisible(false)} style={styles.closeBtn}>
-                <MaterialIcons name="close" size={24} color={Colors.slate500} />
+                <MaterialIcons name="close" size={24} color={theme.slate500} />
               </TouchableOpacity>
             </View>
 
@@ -365,7 +368,7 @@ export default function AdminUsersScreen() {
                   secureTextEntry={!showPassword}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                  <MaterialIcons name={showPassword ? "visibility" : "visibility-off"} size={20} color={Colors.slate400} />
+                  <MaterialIcons name={showPassword ? "visibility" : "visibility-off"} size={20} color={theme.slate400} />
                 </TouchableOpacity>
               </View>
 
@@ -379,7 +382,7 @@ export default function AdminUsersScreen() {
                   secureTextEntry={!showConfirmPassword}
                 />
                 <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeIcon}>
-                  <MaterialIcons name={showConfirmPassword ? "visibility" : "visibility-off"} size={20} color={Colors.slate400} />
+                  <MaterialIcons name={showConfirmPassword ? "visibility" : "visibility-off"} size={20} color={theme.slate400} />
                 </TouchableOpacity>
               </View>
 
@@ -394,28 +397,28 @@ export default function AdminUsersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: Colors.backgroundLight },
+const createStyles = (theme: any) => StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: theme.backgroundLight },
   header: { 
     flexDirection: 'row', alignItems: 'center', 
     paddingHorizontal: 16, paddingVertical: 14, 
-    backgroundColor: Colors.slate800 
+    backgroundColor: theme.slate800 
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20 },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 18, fontWeight: 'bold', color: Colors.white, letterSpacing: -0.3 },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 18, fontWeight: 'bold', color: theme.white, letterSpacing: -0.3 },
   headerSpacer: { width: 40 },
   content: { flex: 1 },
   listContent: { padding: 16, paddingBottom: 40, gap: 12 },
   userCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: theme.white,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: Colors.slate200,
+    borderColor: theme.slate200,
     gap: 12
   },
   adminCard: {
-    borderColor: Colors.primaryBorder,
+    borderColor: theme.primaryBorder,
     backgroundColor: '#F8FAF9', // Muy leve verde
   },
   userInfo: {
@@ -427,14 +430,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.slate100,
+    backgroundColor: theme.slate100,
     alignItems: 'center',
     justifyContent: 'center'
   },
   avatarText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: Colors.slate600
+    color: theme.slate600
   },
   userTextCol: {
     flex: 1,
@@ -442,12 +445,12 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: Colors.slate900,
+    color: theme.slate900,
     marginBottom: 2
   },
   userEmail: {
     fontSize: 13,
-    color: Colors.slate500,
+    color: theme.slate500,
     marginBottom: 6
   },
   roleBadge: {
@@ -457,15 +460,15 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   roleBadgeAutor: {
-    backgroundColor: Colors.slate100,
+    backgroundColor: theme.slate100,
   },
   roleBadgeAdmin: {
-    backgroundColor: Colors.primary,
+    backgroundColor: theme.primary,
   },
   roleText: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: Colors.slate600
+    color: theme.slate600
   },
   actionBtn: {
     flex: 1,
@@ -476,20 +479,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   btnAscender: {
-    backgroundColor: Colors.white,
-    borderColor: Colors.primary,
+    backgroundColor: theme.white,
+    borderColor: theme.primary,
   },
   btnRevocar: {
-    backgroundColor: Colors.dangerLight,
+    backgroundColor: theme.dangerLight,
     borderColor: '#C6282820',
   },
   actionBtnText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: Colors.primary
+    color: theme.primary
   },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 64, gap: 12 },
-  emptyText: { fontSize: 15, color: Colors.slate400, fontWeight: '500' },
+  emptyText: { fontSize: 15, color: theme.slate400, fontWeight: '500' },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
@@ -500,13 +503,13 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white,
+    backgroundColor: theme.white,
     margin: 16,
     marginBottom: 0,
     paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.slate200,
+    borderColor: theme.slate200,
   },
   searchIcon: {
     marginRight: 8,
@@ -514,7 +517,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: 40,
-    color: Colors.slate900,
+    color: theme.slate900,
   },
   cardActions: {
     flexDirection: 'row',
@@ -522,8 +525,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   btnEdit: {
-    backgroundColor: Colors.slate700,
-    borderColor: Colors.slate800,
+    backgroundColor: theme.slate700,
+    borderColor: theme.slate800,
     flexDirection: 'row',
   },
   modalContainer: {
@@ -532,7 +535,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: Colors.white,
+    backgroundColor: theme.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -547,7 +550,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.slate900,
+    color: theme.slate900,
   },
   closeBtn: {
     padding: 4,
@@ -555,38 +558,38 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.slate700,
+    color: theme.slate700,
     marginBottom: 8,
     marginTop: 12,
   },
   input: {
     borderWidth: 1,
-    borderColor: Colors.slate200,
+    borderColor: theme.slate200,
     borderRadius: 12,
     padding: 12,
     fontSize: 16,
-    color: Colors.slate900,
-    backgroundColor: Colors.slate50,
+    color: theme.slate900,
+    backgroundColor: theme.slate50,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.slate200,
+    borderColor: theme.slate200,
     borderRadius: 12,
-    backgroundColor: Colors.slate50,
+    backgroundColor: theme.slate50,
   },
   passwordInput: {
     flex: 1,
     padding: 12,
     fontSize: 16,
-    color: Colors.slate900,
+    color: theme.slate900,
   },
   eyeIcon: {
     padding: 12,
   },
   saveBtn: {
-    backgroundColor: Colors.primary,
+    backgroundColor: theme.primary,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -594,7 +597,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   saveBtnText: {
-    color: Colors.white,
+    color: theme.white,
     fontSize: 16,
     fontWeight: 'bold',
   },

@@ -1,16 +1,20 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
 import Animated, { FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { Button, InputField } from '../src/components/ui';
-import { Colors, WasteColors } from '../src/styles/colors';
+import { useTheme } from '../src/styles/theme';
+import { WasteColors } from '../src/styles/colors';
 import { wasteService, WasteCatalogItem } from '../src/services/waste_service';
 import { useAuth } from '../src/store/authStore';
 import Toast from 'react-native-toast-message';
 
 export default function NewReportScreen() {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -131,7 +135,7 @@ export default function NewReportScreen() {
         {items.map((item) => {
           const name = item.nombre_tipo || item.nombre_material || item.nombre_zona || item.nombre_tamano || '';
           const isSelected = selectedId === item.id;
-          const colorSet = isType ? (WasteColors[name] || { bg: Colors.slate100, text: Colors.slate700 }) : null;
+          const colorSet = isType ? (WasteColors[name] || { bg: theme.slate100, text: theme.slate700 }) : null;
 
           return (
             <TouchableOpacity
@@ -144,7 +148,7 @@ export default function NewReportScreen() {
               activeOpacity={0.7}
             >
               {isType && (
-                <View style={[styles.categoryColorDot, { backgroundColor: colorSet?.text || Colors.slate400 }]} />
+                <View style={[styles.categoryColorDot, { backgroundColor: colorSet?.text || theme.slate400 }]} />
               )}
               <Text style={[
                 isType ? styles.categoryCardText : styles.catalogCardText, 
@@ -152,7 +156,7 @@ export default function NewReportScreen() {
               ]}>
                 {name}
               </Text>
-              {!isType && isSelected && <MaterialIcons name="check-circle" size={16} color={Colors.primary} />}
+              {!isType && isSelected && <MaterialIcons name="check-circle" size={16} color={theme.primary} />}
             </TouchableOpacity>
           );
         })}
@@ -252,9 +256,9 @@ export default function NewReportScreen() {
         <MaterialIcons 
           name={photoTaken ? "check-circle" : "camera-alt"} 
           size={48} 
-          color={photoTaken ? Colors.white : Colors.slate400} 
+          color={photoTaken ? theme.white : theme.slate400} 
         />
-        <Text style={[styles.cameraText, photoTaken && { color: Colors.white, fontWeight: 'bold' }]}>
+        <Text style={[styles.cameraText, photoTaken && { color: theme.white, fontWeight: 'bold' }]}>
           {photoTaken ? "¡Evidencia Capturada!" : "Abrir Cámara Nativa"}
         </Text>
       </TouchableOpacity>
@@ -264,8 +268,8 @@ export default function NewReportScreen() {
   if (isLoading) {
     return (
       <View style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={{ marginTop: 12, color: Colors.slate500 }}>Sincronizando con el servidor...</Text>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={{ marginTop: 12, color: theme.slate500 }}>Sincronizando con el servidor...</Text>
       </View>
     );
   }
@@ -274,7 +278,7 @@ export default function NewReportScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerBtn} onPress={handleBack}>
-          <MaterialIcons name="close" size={24} color={Colors.slate900} />
+          <MaterialIcons name="close" size={24} color={theme.slate900} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Crear Reporte</Text>
         <View style={{ width: 40 }} />
@@ -317,47 +321,47 @@ export default function NewReportScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: Colors.backgroundLight },
+const createStyles = (theme: any) => StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: theme.backgroundLight },
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
   headerBtn: { width: 40, height: 40, alignItems: 'flex-start', justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: Colors.slate900 },
-  stepIndicatorContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 16, backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.slate200 },
-  stepCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.slate200, alignItems: 'center', justifyContent: 'center' },
-  stepCircleActive: { backgroundColor: Colors.primary },
-  stepNumber: { fontSize: 14, fontWeight: 'bold', color: Colors.slate500 },
-  stepNumberActive: { color: Colors.white },
-  stepLine: { width: 40, height: 2, backgroundColor: Colors.slate200, marginHorizontal: 8 },
-  stepLineActive: { backgroundColor: Colors.primary },
+  headerTitle: { fontSize: 18, fontWeight: 'bold', color: theme.slate900 },
+  stepIndicatorContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 16, backgroundColor: theme.white, borderBottomWidth: 1, borderBottomColor: theme.slate200 },
+  stepCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.slate200, alignItems: 'center', justifyContent: 'center' },
+  stepCircleActive: { backgroundColor: theme.primary },
+  stepNumber: { fontSize: 14, fontWeight: 'bold', color: theme.slate500 },
+  stepNumberActive: { color: theme.white },
+  stepLine: { width: 40, height: 2, backgroundColor: theme.slate200, marginHorizontal: 8 },
+  stepLineActive: { backgroundColor: theme.primary },
   scrollContent: { flexGrow: 1, paddingHorizontal: 24, paddingVertical: 24 },
   stepContainer: { flex: 1 },
-  stepTitle: { fontSize: 24, fontWeight: 'bold', color: Colors.slate900, marginBottom: 4 },
-  stepSubtitle: { fontSize: 14, color: Colors.slate500, marginBottom: 24 },
-  inputLabelLabel: { fontSize: 14, fontWeight: '600', color: Colors.slate800, marginBottom: 12 },
+  stepTitle: { fontSize: 24, fontWeight: 'bold', color: theme.slate900, marginBottom: 4 },
+  stepSubtitle: { fontSize: 14, color: theme.slate500, marginBottom: 24 },
+  inputLabelLabel: { fontSize: 14, fontWeight: '600', color: theme.slate800, marginBottom: 12 },
   catalogGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  catalogCard: { paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.slate200, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  catalogCardActive: { borderColor: Colors.primary, backgroundColor: Colors.primaryLight },
-  catalogCardText: { fontSize: 13, color: Colors.slate700 },
-  catalogCardTextActive: { color: Colors.primary, fontWeight: 'bold' },
-  emptyCatalogText: { fontSize: 13, color: Colors.danger, fontStyle: 'italic', marginBottom: 12 },
+  catalogCard: { paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, backgroundColor: theme.white, borderWidth: 1, borderColor: theme.slate200, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  catalogCardActive: { borderColor: theme.primary, backgroundColor: theme.primaryLight },
+  catalogCardText: { fontSize: 13, color: theme.slate700 },
+  catalogCardTextActive: { color: theme.primary, fontWeight: 'bold' },
+  emptyCatalogText: { fontSize: 13, color: theme.danger, fontStyle: 'italic', marginBottom: 12 },
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  sizeChip: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.slate300, borderRadius: 12 },
-  sizeChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  sizeChipText: { fontSize: 14, color: Colors.slate600 },
-  sizeChipTextActive: { color: Colors.white, fontWeight: 'bold' },
-  cameraBox: { height: 160, backgroundColor: Colors.slate100, borderRadius: 16, borderWidth: 2, borderColor: Colors.slate300, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', marginTop: 16, gap: 8 },
+  sizeChip: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: theme.white, borderWidth: 1, borderColor: theme.slate300, borderRadius: 12 },
+  sizeChipActive: { backgroundColor: theme.primary, borderColor: theme.primary },
+  sizeChipText: { fontSize: 14, color: theme.slate600 },
+  sizeChipTextActive: { color: theme.white, fontWeight: 'bold' },
+  cameraBox: { height: 160, backgroundColor: theme.slate100, borderRadius: 16, borderWidth: 2, borderColor: theme.slate300, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', marginTop: 16, gap: 8 },
   cameraBoxSuccess: { backgroundColor: '#059669', borderColor: '#059669', borderStyle: 'solid' },
-  cameraText: { fontSize: 15, color: Colors.slate600 },
-  footer: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: Colors.white, borderTopWidth: 1, borderTopColor: Colors.slate200 },
+  cameraText: { fontSize: 15, color: theme.slate600 },
+  footer: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: theme.white, borderTopWidth: 1, borderTopColor: theme.slate200 },
   footerBackBtn: { paddingVertical: 12, paddingHorizontal: 16 },
-  footerBackText: { fontSize: 15, fontWeight: '600', color: Colors.slate600 },
+  footerBackText: { fontSize: 15, fontWeight: '600', color: theme.slate600 },
   footerNextBtn: { flex: 1, marginLeft: 16 },
   footerSubmitBtn: { flex: 1, marginLeft: 16, backgroundColor: '#059669' },
   // Category Specific Styles
   categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 8 },
-  categoryCard: { width: '48%', padding: 16, borderRadius: 12, backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.slate200, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  categoryCardText: { fontSize: 13, color: Colors.slate700, flex: 1 },
+  categoryCard: { width: '48%', padding: 16, borderRadius: 12, backgroundColor: theme.white, borderWidth: 1.5, borderColor: theme.slate200, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  categoryCardText: { fontSize: 13, color: theme.slate700, flex: 1 },
   categoryColorDot: { width: 10, height: 10, borderRadius: 5 },
   otherInputContainer: { marginTop: 12, paddingBottom: 8 },
 });

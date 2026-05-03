@@ -1,6 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { userService } from '../src/services/user_service';
 import { WasteReport, wasteService } from '../src/services/waste_service';
 
@@ -8,7 +8,7 @@ import {
   ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
-import { Colors } from '../src/styles/colors';
+import { useTheme } from '../src/styles/theme';
 
 const formatDate = (dateStr?: string): string => {
   if (!dateStr) return 'Sin fecha';
@@ -27,6 +27,9 @@ const formatDate = (dateStr?: string): string => {
 };
 
 export default function ReportDetailScreen() {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const { id } = useLocalSearchParams();
   const [report, setReport] = useState<WasteReport | null>(null);
   const [type, setType] = useState<string | null>(null);
@@ -72,17 +75,17 @@ export default function ReportDetailScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()}>
-          <MaterialIcons name="arrow-back" size={24} color={Colors.primary} />
+          <MaterialIcons name="arrow-back" size={24} color={theme.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Detalle del Reporte</Text>
         <TouchableOpacity style={styles.headerBtn}>
-          <MaterialIcons name="share" size={24} color={Colors.primary} />
+          <MaterialIcons name="share" size={24} color={theme.primary} />
         </TouchableOpacity>
       </View>
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={theme.primary} />
           <Text style={styles.loadingText}>Cargando detalles...</Text>
         </View>
       ) : (
@@ -90,7 +93,7 @@ export default function ReportDetailScreen() {
           {/* 1. Identificación */}
           <View style={styles.section}>
             <View style={styles.sectionTitleRow}>
-              <MaterialIcons name="fingerprint" size={22} color={Colors.primary} />
+              <MaterialIcons name="fingerprint" size={22} color={theme.primary} />
               <Text style={styles.sectionTitle}>Identificación</Text>
             </View>
             <View style={styles.card}>
@@ -108,7 +111,7 @@ export default function ReportDetailScreen() {
                 <Text style={styles.cardLabel}>Reportado por</Text>
                 <View style={styles.cardUserRow}>
                   <View style={styles.cardUserAvatar}>
-                    <MaterialIcons name="person" size={14} color={Colors.primary} />
+                    <MaterialIcons name="person" size={14} color={theme.primary} />
                   </View>
                   <Text style={styles.cardValue}>{reporter ?? `#${report?.usuario_id}`}</Text>
                 </View>
@@ -119,7 +122,7 @@ export default function ReportDetailScreen() {
           {/* 2. Clasificación del residuo */}
           <View style={styles.section}>
             <View style={styles.sectionTitleRow}>
-              <MaterialIcons name="category" size={22} color={Colors.primary} />
+              <MaterialIcons name="category" size={22} color={theme.primary} />
               <Text style={styles.sectionTitle}>Clasificación del residuo</Text>
             </View>
             <View style={styles.card}>
@@ -133,7 +136,7 @@ export default function ReportDetailScreen() {
                 <View style={styles.classCell}>
                   <Text style={styles.classLabel}>MATERIAL</Text>
                   <View style={styles.classMaterialRow}>
-                    <MaterialIcons name="recycling" size={18} color={Colors.primary} />
+                    <MaterialIcons name="recycling" size={18} color={theme.primary} />
                     <Text style={styles.classValue}>{material}</Text>
                   </View>
                 </View>
@@ -148,13 +151,13 @@ export default function ReportDetailScreen() {
           {/* 3. Ubicación */}
           <View style={styles.section}>
             <View style={styles.sectionTitleRow}>
-              <MaterialIcons name="explore" size={22} color={Colors.primary} />
+              <MaterialIcons name="explore" size={22} color={theme.primary} />
               <Text style={styles.sectionTitle}>Ubicación</Text>
             </View>
             <View style={styles.card}>
               <View style={styles.locationHeader}>
                 <View style={styles.locationIconWrapper}>
-                  <MaterialIcons name="place" size={22} color={Colors.primary} />
+                  <MaterialIcons name="place" size={22} color={theme.primary} />
                 </View>
                 <View>
                   <Text style={styles.locationName}>Zona: {zone}</Text>
@@ -170,7 +173,7 @@ export default function ReportDetailScreen() {
                 <View style={styles.coordCell}>
                   <Text style={styles.classLabel}>PRECISIÓN</Text>
                   <View style={styles.classMaterialRow}>
-                    <MaterialIcons name="gps-fixed" size={16} color={Colors.primary} />
+                    <MaterialIcons name="gps-fixed" size={16} color={theme.primary} />
                     <Text style={styles.cardValue}>No especificada</Text>
                   </View>
                 </View>
@@ -185,7 +188,7 @@ export default function ReportDetailScreen() {
           {/* 4. Descripción */}
           <View style={styles.section}>
             <View style={styles.sectionTitleRow}>
-              <MaterialIcons name="description" size={22} color={Colors.primary} />
+              <MaterialIcons name="description" size={22} color={theme.primary} />
               <Text style={styles.sectionTitle}>Descripción</Text>
             </View>
             <View style={styles.descriptionBlock}>
@@ -208,10 +211,10 @@ export default function ReportDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.backgroundLight,
+    backgroundColor: theme.backgroundLight,
   },
   loadingContainer: {
     flex: 1,
@@ -221,7 +224,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-    color: Colors.primary,
+    color: theme.primary,
     fontWeight: '500',
   },
   header: {
@@ -231,8 +234,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.primaryBorder,
-    backgroundColor: Colors.backgroundLight,
+    borderBottomColor: theme.primaryBorder,
+    backgroundColor: theme.backgroundLight,
   },
   headerBtn: {
     width: 40,
@@ -243,7 +246,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: Colors.slate900,
+    color: theme.slate900,
     letterSpacing: -0.3,
   },
   scrollContent: {
@@ -263,15 +266,15 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.slate900,
+    color: theme.slate900,
     letterSpacing: -0.3,
   },
   card: {
-    backgroundColor: Colors.white,
+    backgroundColor: theme.white,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: Colors.primaryBorder,
+    borderColor: theme.primaryBorder,
   },
   cardRow: {
     flexDirection: 'row',
@@ -281,23 +284,23 @@ const styles = StyleSheet.create({
   },
   cardDivider: {
     height: 1,
-    backgroundColor: Colors.primaryBorder,
+    backgroundColor: theme.primaryBorder,
   },
   cardLabel: {
     fontSize: 13,
     fontWeight: '500',
-    color: Colors.primary,
+    color: theme.primary,
     opacity: 0.7,
   },
   cardValue: {
     fontSize: 13,
     fontWeight: '500',
-    color: Colors.slate900,
+    color: theme.slate900,
   },
   cardValueMono: {
     fontSize: 13,
     fontFamily: 'monospace',
-    color: Colors.slate900,
+    color: theme.slate900,
   },
   cardUserRow: {
     flexDirection: 'row',
@@ -308,7 +311,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -329,14 +332,14 @@ const styles = StyleSheet.create({
   classLabel: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: Colors.primary,
+    color: theme.primary,
     opacity: 0.7,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   classBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -344,7 +347,7 @@ const styles = StyleSheet.create({
   classBadgeText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: Colors.primary,
+    color: theme.primary,
   },
   classMaterialRow: {
     flexDirection: 'row',
@@ -354,7 +357,7 @@ const styles = StyleSheet.create({
   classValue: {
     fontSize: 13,
     fontWeight: '500',
-    color: Colors.slate900,
+    color: theme.slate900,
   },
   locationHeader: {
     flexDirection: 'row',
@@ -366,18 +369,18 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   locationName: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: Colors.slate900,
+    color: theme.slate900,
   },
   locationSub: {
     fontSize: 12,
-    color: Colors.primary,
+    color: theme.primary,
     opacity: 0.7,
   },
   coordsGrid: {
@@ -392,15 +395,15 @@ const styles = StyleSheet.create({
   },
   descriptionBlock: {
     borderLeftWidth: 4,
-    borderLeftColor: Colors.primary,
+    borderLeftColor: theme.primary,
     paddingLeft: 16,
     paddingVertical: 8,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     borderRadius: 4,
   },
   descriptionText: {
     fontSize: 14,
-    color: Colors.slate700,
+    color: theme.slate700,
     fontStyle: 'italic',
     lineHeight: 22,
   },
@@ -408,13 +411,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: Colors.primaryBorder,
+    borderTopColor: theme.primaryBorder,
     gap: 4,
   },
   footerLabel: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: Colors.primary,
+    color: theme.primary,
     opacity: 0.5,
     textTransform: 'uppercase',
     letterSpacing: 2,
@@ -422,7 +425,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 11,
-    color: Colors.slate400,
+    color: theme.slate400,
     textAlign: 'center',
   },
 });
