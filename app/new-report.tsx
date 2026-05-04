@@ -1,4 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import React, { useState, useEffect, useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
@@ -35,6 +37,7 @@ export default function NewReportScreen() {
   const [otherType, setOtherType] = useState('');
   const [otherMaterial, setOtherMaterial] = useState('');
   const [photoTaken, setPhotoTaken] = useState(false);
+  const [imageUri, setImageUri] = useState<string | null>(null);
 
   useEffect(() => {
     loadCatalogs();
@@ -69,6 +72,30 @@ export default function NewReportScreen() {
     else router.back();
   };
 
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Toast.show({
+        type: 'error',
+        text1: 'Permiso denegado',
+        text2: 'Necesitamos acceso a la cámara para tomar la foto.',
+      });
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+      setPhotoTaken(true);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!user?.id || !selectedType || !selectedMaterial || !selectedZone || !selectedSize) {
       Toast.show({
@@ -94,7 +121,7 @@ export default function NewReportScreen() {
         finalDescription = extras.join(' | ') + (finalDescription ? `\n\nDescripción adicional: ${finalDescription}` : '');
       }
 
-      await wasteService.createReport({
+      const newReport = await wasteService.createReport({
         usuario_id: user.id,
         tipo_residuo_id: selectedType,
         material_id: selectedMaterial,
@@ -102,7 +129,17 @@ export default function NewReportScreen() {
         tamano_id: selectedSize,
         descripcion: finalDescription,
       });
+
+      if (imageUri && newReport?.id) {
+        await wasteService.uploadReportPhoto(newReport.id, imageUri);
+      }
+      
       setIsSubmitting(false);
+      Toast.show({
+        type: 'success',
+        text1: 'Reporte emitido',
+        text2: 'El reporte se ha creado correctamente.',
+      });
       router.replace('/(tabs)/reports');
     } catch (error) {
       console.error('Error al crear reporte:', error);
@@ -251,16 +288,28 @@ export default function NewReportScreen() {
       <TouchableOpacity 
         style={[styles.cameraBox, photoTaken && styles.cameraBoxSuccess]} 
         activeOpacity={0.8}
-        onPress={() => setPhotoTaken(true)}
+        onPress={takePhoto}
       >
-        <MaterialIcons 
-          name={photoTaken ? "check-circle" : "camera-alt"} 
-          size={48} 
-          color={photoTaken ? theme.white : theme.slate400} 
-        />
-        <Text style={[styles.cameraText, photoTaken && { color: theme.white, fontWeight: 'bold' }]}>
-          {photoTaken ? "¡Evidencia Capturada!" : "Abrir Cámara Nativa"}
-        </Text>
+        {photoTaken && imageUri ? (
+          <View style={styles.previewContainer}>
+            <Image source={{ uri: imageUri }} style={styles.previewImage} contentFit="cover" />
+            <View style={styles.previewOverlay}>
+              <MaterialIcons name="check-circle" size={32} color={theme.white} />
+              <Text style={styles.previewText}>Cambiar Foto</Text>
+            </View>
+          </View>
+        ) : (
+          <>
+            <MaterialIcons 
+              name="camera-alt" 
+              size={48} 
+              color={theme.slate400} 
+            />
+            <Text style={styles.cameraText}>
+              Abrir Cámara Nativa
+            </Text>
+          </>
+        )}
       </TouchableOpacity>
     </Animated.View>
   );
@@ -351,8 +400,12 @@ const createStyles = (theme: any) => StyleSheet.create({
   sizeChipText: { fontSize: 14, color: theme.slate600 },
   sizeChipTextActive: { color: theme.white, fontWeight: 'bold' },
   cameraBox: { height: 160, backgroundColor: theme.slate100, borderRadius: 16, borderWidth: 2, borderColor: theme.slate300, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', marginTop: 16, gap: 8 },
-  cameraBoxSuccess: { backgroundColor: '#059669', borderColor: '#059669', borderStyle: 'solid' },
+  cameraBoxSuccess: { backgroundColor: theme.slate100, borderColor: '#059669', borderStyle: 'solid' },
   cameraText: { fontSize: 15, color: theme.slate600 },
+  previewContainer: { width: '100%', height: '100%', borderRadius: 14, overflow: 'hidden', position: 'relative' },
+  previewImage: { width: '100%', height: '100%' },
+  previewOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', paddingVertical: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  previewText: { color: theme.white, fontSize: 13, fontWeight: 'bold' },
   footer: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: theme.white, borderTopWidth: 1, borderTopColor: theme.slate200 },
   footerBackBtn: { paddingVertical: 12, paddingHorizontal: 16 },
   footerBackText: { fontSize: 15, fontWeight: '600', color: theme.slate600 },
