@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState, useMemo } from 'react';
 import { userService } from '../src/services/user_service';
@@ -147,6 +148,24 @@ export default function ReportDetailScreen() {
               </View>
             </View>
           </View>
+
+          {/* Evidencia Fotográfica */}
+          {(report?.foto_url || report?.foto?.url) && (
+            <View style={styles.section}>
+              <View style={styles.sectionTitleRow}>
+                <MaterialIcons name="camera-alt" size={22} color={theme.primary} />
+                <Text style={styles.sectionTitle}>Evidencia Fotográfica</Text>
+              </View>
+              <View style={styles.photoCard}>
+                <Image 
+                  source={{ uri: report?.foto?.url || report?.foto_url }} 
+                  style={styles.fullPhoto} 
+                  contentFit="cover"
+                  transition={1000}
+                />
+              </View>
+            </View>
+          )}
 
           {/* 3. Ubicación */}
           <View style={styles.section}>
@@ -301,6 +320,18 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 13,
     fontFamily: 'monospace',
     color: theme.slate900,
+  },
+  photoCard: {
+    backgroundColor: theme.white,
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: theme.primaryBorder,
+    height: 280,
+  },
+  fullPhoto: {
+    width: '100%',
+    height: '100%',
   },
   cardUserRow: {
     flexDirection: 'row',
