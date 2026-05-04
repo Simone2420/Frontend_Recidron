@@ -214,6 +214,7 @@ export default function ReportsScreen() {
               location={item.zona_nombre}
               material={item.material_nombre}
               dateStr={item.fecha_reporte ? new Date(item.fecha_reporte.replace(' ', 'T') + 'Z').toLocaleDateString() : 'Recientemente'}
+              foto_url={item.foto_url}
               onPress={() => router.push({ pathname: '/report-detail', params: { id: item.id } })}
             />
           )}
