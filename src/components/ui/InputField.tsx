@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { StyleSheet, Text, TextInput, TextInputProps, View, TouchableOpacity } from 'react-native';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../../styles/theme';
 
 export interface InputFieldProps extends TextInputProps {
   label?: string;
@@ -21,6 +21,8 @@ export const InputField = ({
   ...props
 }: InputFieldProps) => {
   const [isFocused, setIsFocused] = useState(false);
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <View style={styles.inputWrapper}>
@@ -36,7 +38,7 @@ export const InputField = ({
           <MaterialIcons
             name={icon}
             size={20}
-            color={isFocused ? Colors.primary : Colors.slate400}
+            color={isFocused ? theme.primary : theme.slate400}
             style={styles.inputIcon}
           />
         )}
@@ -47,7 +49,7 @@ export const InputField = ({
             rightIcon && styles.inputWithRightIcon, 
             style
           ]}
-          placeholderTextColor={Colors.slate400}
+          placeholderTextColor={theme.slate400}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           {...props}
@@ -57,7 +59,7 @@ export const InputField = ({
             <MaterialIcons
               name={rightIcon}
               size={22}
-              color={Colors.slate400}
+              color={theme.slate400}
             />
           </TouchableOpacity>
         )}
@@ -67,32 +69,32 @@ export const InputField = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   inputWrapper: {
     marginBottom: 16,
   },
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.slate800,
+    color: theme.slate800,
     marginBottom: 8,
     paddingHorizontal: 4,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white,
+    backgroundColor: theme.white,
     borderWidth: 1,
-    borderColor: Colors.slate200,
+    borderColor: theme.slate200,
     borderRadius: 12,
     height: 56,
   },
   inputFocused: {
-    borderColor: Colors.primary,
+    borderColor: theme.primary,
     borderWidth: 2,
   },
   inputError: {
-    borderColor: Colors.danger,
+    borderColor: theme.danger,
   },
   inputIcon: {
     position: 'absolute',
@@ -102,7 +104,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: '100%',
-    color: Colors.slate900,
+    color: theme.slate900,
     fontSize: 16,
     paddingHorizontal: 16,
   },
@@ -120,7 +122,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   errorText: {
-    color: Colors.danger,
+    color: theme.danger,
     fontSize: 12,
     marginTop: 4,
     paddingHorizontal: 4,

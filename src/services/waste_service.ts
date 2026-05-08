@@ -18,8 +18,13 @@ export interface WasteReport {
   tamano_id: number;
   fecha_reporte?: string;
   es_activo?: number;
-  // Estos se mantienen para compatibilidad temporal o UI si es necesario
-  photo_url?: string; 
+  // Campos de imagen devueltos por el backend
+  foto_url?: string; 
+  foto?: {
+    id: number;
+    url: string;
+    fecha_subida: string;
+  };
 }
 
 export const wasteService = {
@@ -90,6 +95,28 @@ export const wasteService = {
   },
   getSizeById: async (id: number) => {
     const response = await api.get(`/tamanos/${id}`);
+    return response.data;
+  },
+  
+  uploadReportPhoto: async (reportId: number, imageUri: string) => {
+    const formData = new FormData();
+    
+    // Extraer extensión del archivo de la URI
+    const uriParts = imageUri.split('.');
+    const fileType = uriParts[uriParts.length - 1];
+
+    // En React Native, el objeto FormData para archivos requiere esta estructura
+    formData.append('file', {
+      uri: imageUri,
+      name: `report_photo_${reportId}.${fileType}`,
+      type: `image/${fileType === 'jpg' ? 'jpeg' : fileType}`,
+    } as any);
+
+    const response = await api.post(`/reportes/${reportId}/foto`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   }
 };
