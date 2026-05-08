@@ -1,5 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState, useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
@@ -12,8 +12,14 @@ export default function ForgotPasswordScreen() {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
+  const { token } = useLocalSearchParams();
+
   const [email, setEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isResetSuccess, setIsResetSuccess] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -36,6 +42,31 @@ export default function ForgotPasswordScreen() {
     }
   };
 
+  const handleResetPassword = async () => {
+    setError('');
+    
+    if (newPassword.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await authService.resetPassword(token as string, newPassword);
+      setIsResetSuccess(true);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'No se pudo restablecer la contraseña. El enlace puede ser inválido o haber expirado.');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -49,7 +80,58 @@ export default function ForgotPasswordScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {!isSuccess ? (
+          {isResetSuccess ? (
+            <Animated.View entering={FadeIn.duration(800)} style={styles.successSection}>
+              <View style={styles.successCircle}>
+                <MaterialIcons name="check-circle" size={56} color={theme.white} />
+              </View>
+              <Text style={styles.successTitle}>¡Contraseña Actualizada!</Text>
+              <Text style={styles.successSubtitle}>
+                Tu contraseña ha sido cambiada exitosamente. Ya puedes iniciar sesión con tu nueva contraseña.
+              </Text>
+              <Button
+                title="Volver al Login"
+                onPress={() => router.replace('/(auth)/login')}
+                style={styles.returnBtn}
+              />
+            </Animated.View>
+          ) : token ? (
+            <Animated.View entering={FadeInDown.duration(600)} style={styles.formSection}>
+              <View style={styles.iconCircle}>
+                <MaterialIcons name="password" size={48} color={theme.primary} />
+              </View>
+              <Text style={styles.title}>Nueva Contraseña</Text>
+              <Text style={styles.subtitle}>
+                Ingresa tu nueva contraseña. Asegúrate de que tenga al menos 8 caracteres.
+              </Text>
+
+              <View style={styles.inputArea}>
+                <InputField
+                  label="Nueva Contraseña"
+                  placeholder="Mínimo 8 caracteres"
+                  icon="lock"
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  secureTextEntry={true}
+                />
+                <InputField
+                  label="Confirmar Contraseña"
+                  placeholder="Repite la contraseña"
+                  icon="lock-check"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={true}
+                />
+              </View>
+              {error ? <Text style={{color: theme.danger, marginBottom: 12, textAlign: 'center'}}>{error}</Text> : null}
+
+              <Button
+                title="Restablecer Contraseña"
+                onPress={handleResetPassword}
+                isLoading={isLoading}
+              />
+            </Animated.View>
+          ) : !isSuccess ? (
             <Animated.View entering={FadeInDown.duration(600)} style={styles.formSection}>
               <View style={styles.iconCircle}>
                 <MaterialIcons name="lock-reset" size={48} color={theme.primary} />
