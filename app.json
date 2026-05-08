@@ -38,6 +38,13 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "La aplicación necesita acceso a tus fotos para adjuntar evidencia al reporte.",
+          "cameraPermission": "La aplicación necesita acceso a la cámara para tomar fotos de los residuos."
+        }
       ]
     ],
     "experiments": {

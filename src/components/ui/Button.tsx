@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, TouchableOpacityProps, View } from 'react-native';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../../styles/theme';
 
 export interface ButtonProps extends TouchableOpacityProps {
   title: string;
@@ -20,6 +20,8 @@ export const Button = ({
   ...props
 }: ButtonProps) => {
   const isPrimary = variant === 'primary';
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   const getContainerStyle = () => {
     switch (variant) {
@@ -49,14 +51,14 @@ export const Button = ({
       {...props}
     >
       {isLoading ? (
-        <ActivityIndicator color={isPrimary ? Colors.white : Colors.primary} />
+        <ActivityIndicator color={isPrimary ? theme.white : theme.primary} />
       ) : (
         <View style={styles.btnContent}>
           {icon && (
             <MaterialIcons
               name={icon}
               size={20}
-              color={isPrimary ? Colors.white : Colors.primary}
+              color={isPrimary ? theme.white : theme.primary}
               style={styles.btnIcon}
             />
           )}
@@ -67,7 +69,7 @@ export const Button = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   btnContainer: {
     paddingVertical: 16,
     paddingHorizontal: 24,
@@ -78,20 +80,20 @@ const styles = StyleSheet.create({
   btnContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   btnIcon: { marginRight: 8 },
   btnPrimary: {
-    backgroundColor: Colors.primary,
-    shadowColor: Colors.primary,
+    backgroundColor: theme.primary,
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
-  btnSecondary: { backgroundColor: Colors.primaryLight },
-  btnOutline: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: Colors.primary },
+  btnSecondary: { backgroundColor: theme.primaryLight },
+  btnOutline: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: theme.primary },
   btnText: { backgroundColor: 'transparent', paddingVertical: 8, paddingHorizontal: 12 },
   btnDisabled: { opacity: 0.6 },
   btnTextBase: { fontSize: 16, fontWeight: '700' },
-  btnTextPrimary: { color: Colors.white },
-  btnTextSecondary: { color: Colors.primary },
-  btnTextOutline: { color: Colors.primary },
-  btnTextText: { color: Colors.primary },
+  btnTextPrimary: { color: theme.white },
+  btnTextSecondary: { color: theme.primary },
+  btnTextOutline: { color: theme.primary },
+  btnTextText: { color: theme.primary },
 });
