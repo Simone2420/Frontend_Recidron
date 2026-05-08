@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import React, { useState, useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { Button, InputField } from '../../src/components/ui';
+import { Button, InputField, SupportModal } from '../../src/components/ui';
 import { useAuth } from '../../src/store/authStore';
 import { useTheme } from '../../src/styles/theme';
 
@@ -17,6 +17,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [supportVisible, setSupportVisible] = useState(false);
 
   const handleLogin = async () => {
     setError('');
@@ -104,7 +105,17 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </Animated.View>
 
+        <Animated.View entering={FadeIn.duration(800).delay(800)} style={{ alignItems: 'center', marginTop: 16 }}>
+          <TouchableOpacity activeOpacity={0.7} onPress={() => setSupportVisible(true)}>
+            <Text style={{ color: theme.slate500, fontSize: 13, textDecorationLine: 'underline' }}>
+              ¿Necesitas Ayuda? Contactar Soporte
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+
       </ScrollView>
+
+      <SupportModal visible={supportVisible} onClose={() => setSupportVisible(false)} />
 
       <View style={styles.waveContainer} pointerEvents="none">
         <View style={styles.waveLayer1} />

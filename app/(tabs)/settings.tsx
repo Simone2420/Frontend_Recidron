@@ -2,15 +2,17 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/store/authStore';
 import { useTheme } from '../../src/styles/theme';
+import { SupportModal } from '../../src/components/ui';
 
 export default function SettingsScreen() {
   const { themeMode, setThemeMode, theme, isDark } = useTheme();
   const { logout } = useAuth();
   
   const [themeModalVisible, setThemeModalVisible] = useState(false);
+  const [supportVisible, setSupportVisible] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -63,6 +65,26 @@ export default function SettingsScreen() {
             </View>
             <View style={styles.settingRowRight}>
               <Text style={[styles.settingValue, { color: theme.slate500 }]}>{getThemeLabel()}</Text>
+              <MaterialIcons name="chevron-right" size={20} color={theme.slate400} />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.slate500 }]}>SOPORTE</Text>
+          
+          <TouchableOpacity 
+            style={[styles.settingRow, { backgroundColor: theme.white, borderColor: theme.slate100 }]} 
+            activeOpacity={0.7}
+            onPress={() => setSupportVisible(true)}
+          >
+            <View style={styles.settingRowLeft}>
+              <View style={[styles.settingIconBox, { backgroundColor: theme.slate100 }]}>
+                <MaterialIcons name="support-agent" size={20} color={theme.slate700} />
+              </View>
+              <Text style={[styles.settingLabel, { color: theme.slate900 }]}>Ayuda / Contacto</Text>
+            </View>
+            <View style={styles.settingRowRight}>
               <MaterialIcons name="chevron-right" size={20} color={theme.slate400} />
             </View>
           </TouchableOpacity>
@@ -140,6 +162,8 @@ export default function SettingsScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      <SupportModal visible={supportVisible} onClose={() => setSupportVisible(false)} />
 
     </SafeAreaView>
   );
