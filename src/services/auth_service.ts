@@ -27,5 +27,13 @@ export const authService = {
     // Ajustaremos con tu endpoint real, por ahora asumimos /usuarios/recover
     const response = await api.post('/usuarios/recover', { email });
     return response.data;
+  },
+
+  resetPassword: async (token: string, nueva_password: string) => {
+    const response = await api.post('/usuarios/reset-password', {
+      token,
+      nueva_password,
+    });
+    return response.data;
   }
 };
