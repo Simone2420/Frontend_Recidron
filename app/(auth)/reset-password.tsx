@@ -122,56 +122,58 @@ export default function ResetPasswordScreen() {
             </View>
 
             {/* Campos */}
-            <InputField
-              label="Correo Electrónico"
-              placeholder="usuario@unicundinamarca.edu.co"
-              icon="mail"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
+            <View style={styles.fieldsContainer}>
+              <InputField
+                label="Correo Electrónico"
+                placeholder="usuario@unicundinamarca.edu.co"
+                icon="mail"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
 
-            <InputField
-              label="Código de verificación"
-              placeholder="AB1C2D"
-              icon="dialpad"
-              value={codigo}
-              onChangeText={(t) => setCodigo(t.toUpperCase())}
-              autoCapitalize="characters"
-              maxLength={6}
-            />
+              <InputField
+                label="Código de verificación"
+                placeholder="AB1C2D"
+                icon="dialpad"
+                value={codigo}
+                onChangeText={(t) => setCodigo(t.toUpperCase())}
+                autoCapitalize="characters"
+                maxLength={6}
+              />
 
-            <InputField
-              label="Nueva Contraseña"
-              placeholder="Mínimo 8 caracteres"
-              icon="lock"
-              value={nuevaPassword}
-              onChangeText={setNuevaPassword}
-              secureTextEntry={!showPassword}
-              rightIcon={showPassword ? 'visibility' : 'visibility-off'}
-              onRightIconPress={() => setShowPassword(!showPassword)}
-            />
+              <InputField
+                label="Nueva Contraseña"
+                placeholder="Mínimo 8 caracteres"
+                icon="lock"
+                value={nuevaPassword}
+                onChangeText={setNuevaPassword}
+                secureTextEntry={!showPassword}
+                rightIcon={showPassword ? 'visibility' : 'visibility-off'}
+                onRightIconPress={() => setShowPassword(!showPassword)}
+              />
 
-            <InputField
-              label="Confirmar Contraseña"
-              placeholder="Repite tu nueva contraseña"
-              icon="lock-outline"
-              value={confirmarPassword}
-              onChangeText={setConfirmarPassword}
-              secureTextEntry={!showConfirm}
-              rightIcon={showConfirm ? 'visibility' : 'visibility-off'}
-              onRightIconPress={() => setShowConfirm(!showConfirm)}
-            />
+              <InputField
+                label="Confirmar Contraseña"
+                placeholder="Repite tu nueva contraseña"
+                icon="lock-outline"
+                value={confirmarPassword}
+                onChangeText={setConfirmarPassword}
+                secureTextEntry={!showConfirm}
+                rightIcon={showConfirm ? 'visibility' : 'visibility-off'}
+                onRightIconPress={() => setShowConfirm(!showConfirm)}
+              />
 
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-            <Button
-              title="Restablecer Contraseña"
-              onPress={handleReset}
-              isLoading={isLoading}
-              style={styles.actionBtn}
-            />
+              <Button
+                title="Restablecer Contraseña"
+                onPress={handleReset}
+                isLoading={isLoading}
+                style={styles.actionBtn}
+              />
+            </View>
 
             {/* Enlace para volver a solicitar el código */}
             <TouchableOpacity
@@ -222,6 +224,11 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   formSection: {
     alignItems: 'center',
+    width: '100%',
+  },
+  fieldsContainer: {
+    width: '100%',
+    marginTop: 4,
   },
   iconCircle: {
     width: 80,
