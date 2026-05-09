@@ -13,24 +13,22 @@ export default function ForgotPasswordScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [email, setEmail] = useState('');
-  const [isSuccess, setIsSuccess] = useState(false);
-
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleRecover = async () => {
     setError('');
+    if (email.length < 4) {
+      setError('Por favor, ingresa un correo válido.');
+      return;
+    }
     setIsLoading(true);
     try {
-      if(email.length > 3) {
-        await authService.recoverPassword(email);
-        setIsSuccess(true);
-      } else {
-        setError('Por favor, ingresa un correo válido.');
-      }
+      await authService.recoverPassword(email);
+      // Navegar directamente a la pantalla de código, pasando el email
+      router.push({ pathname: '/(auth)/reset-password' as any, params: { email } });
     } catch (err: any) {
       setError(err.response?.data?.detail || 'No se pudo enviar el correo de recuperación.');
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -49,60 +47,48 @@ export default function ForgotPasswordScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {!isSuccess ? (
-            <Animated.View entering={FadeInDown.duration(600)} style={styles.formSection}>
-              <View style={styles.iconCircle}>
-                <MaterialIcons name="lock-reset" size={48} color={theme.primary} />
-              </View>
-              <Text style={styles.title}>Recuperar Acceso</Text>
-              <Text style={styles.subtitle}>
-                Ingresa tu correo institucional registrado y te enviaremos instrucciones para generar una nueva contraseña.
-              </Text>
+          <Animated.View entering={FadeInDown.duration(600)} style={styles.formSection}>
+            <View style={styles.iconCircle}>
+              <MaterialIcons name="lock-reset" size={48} color={theme.primary} />
+            </View>
+            <Text style={styles.title}>Recuperar Acceso</Text>
+            <Text style={styles.subtitle}>
+              Ingresa tu correo institucional registrado y te enviaremos un código de verificación.
+            </Text>
 
-              <View style={styles.inputArea}>
-                <InputField
-                  label="Correo Electrónico"
-                  placeholder="usuario@unicundinamarca.edu.co"
-                  icon="mail"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-              {error ? <Text style={{color: theme.danger, marginBottom: 12, textAlign: 'center'}}>{error}</Text> : null}
-
-              <Button
-                title="Enviar Enlace de Recuperación"
-                onPress={handleRecover}
-                isLoading={isLoading}
+            <View style={styles.inputArea}>
+              <InputField
+                label="Correo Electrónico"
+                placeholder="usuario@unicundinamarca.edu.co"
+                icon="mail"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
               />
-            </Animated.View>
-          ) : (
-            <Animated.View entering={FadeIn.duration(800)} style={styles.successSection}>
-              <View style={styles.successCircle}>
-                <MaterialIcons name="mark-email-read" size={56} color={theme.white} />
-              </View>
-              <Text style={styles.successTitle}>¡Revisa tu buzón!</Text>
-              <Text style={styles.successSubtitle}>
-                Hemos enviado un enlace temporal con código biométrico a: {'\n'}
-                <Text style={styles.successEmailText}>{email}</Text>
+            </View>
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+            <Button
+              title="Enviar Código de Recuperación"
+              onPress={handleRecover}
+              isLoading={isLoading}
+            />
+
+            {/* Acceso directo si ya se recibió el código anteriormente */}
+            <TouchableOpacity
+              style={styles.alreadyCodeContainer}
+              onPress={() => router.push({ pathname: '/(auth)/reset-password', params: { email } })}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.alreadyCodeText}>
+                ¿Ya tienes un código?{' '}
+                <Text style={styles.alreadyCodeLink}>Ingrésalo aquí</Text>
               </Text>
+            </TouchableOpacity>
 
-              <View style={styles.infoBox}>
-                <MaterialIcons name="info-outline" size={20} color={theme.primary} />
-                <Text style={styles.infoText}>
-                  El enlace expirará de tu buzón universitario en 15 minutos por tu seguridad.
-                </Text>
-              </View>
-
-              <Button
-                title="Volver al Login"
-                onPress={() => router.replace('/(auth)/login')}
-                style={styles.returnBtn}
-              />
-            </Animated.View>
-          )}
+          </Animated.View>
         </ScrollView>
       </SafeAreaView>
     </KeyboardAvoidingView>
@@ -167,61 +153,23 @@ const createStyles = (theme: any) => StyleSheet.create({
     width: '100%',
     marginBottom: 24,
   },
-  
-  // -- Success view --
-  successSection: {
-    alignItems: 'center',
-    marginTop: -40, // Centrar perceptualmente
-  },
-  successCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: theme.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-    shadowColor: theme.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  successTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: theme.slate900,
+  errorText: {
+    color: theme.danger,
+    textAlign: 'center',
     marginBottom: 12,
+    fontSize: 14,
+    width: '100%',
   },
-  successSubtitle: {
-    fontSize: 15,
+  alreadyCodeContainer: {
+    marginTop: 20,
+  },
+  alreadyCodeText: {
+    fontSize: 13,
     color: theme.slate500,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 32,
   },
-  successEmailText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.slate900,
-  },
-  infoBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.primaryLight,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 32,
-    gap: 12,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 13,
+  alreadyCodeLink: {
     color: theme.primary,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  returnBtn: {
-    width: '100%',
+    fontWeight: '600',
   },
 });
