@@ -53,8 +53,8 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: theme.slate400,
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: theme.slate200,
-          backgroundColor: theme.white,
+          borderTopColor: theme.slate100,
+          backgroundColor: theme.card,
           height: 60 + insets.bottom,
           paddingBottom: 8 + insets.bottom,
           paddingTop: 8,
