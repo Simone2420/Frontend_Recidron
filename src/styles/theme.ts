@@ -6,17 +6,26 @@ export const lightColors = {
   ...Colors,
 };
 
-// Definimos un modo oscuro suave que el usuario puede ajustar después
+// Definimos un modo oscuro con la escala slate correctamente invertida
 export const darkColors = {
   ...Colors, // fallback
-  backgroundLight: '#1e293b', // slate800
-  backgroundDark: '#0f172a',  // slate900
-  white: '#1e293b', // Para tarjetas
-  slate900: '#f1f5f9', // Textos oscuros pasan a ser claros
-  slate800: '#e2e8f0',
-  slate700: '#cbd5e1',
+  backgroundLight: '#0f172a', // slate900
+  backgroundDark: '#020617',  // slate950
+  card: '#1e293b', // slate800 - Fondo para tarjetas para que resalten
+  shadow: '#000000', // Sombra siempre negra en modo oscuro
+  
+  // Invertir escala Slate completa
+  slate900: '#f8fafc',
+  slate800: '#f1f5f9',
+  slate700: '#e2e8f0',
   slate500: '#94a3b8',
-  slate100: '#334155', // Bordes
+  slate400: '#64748b',
+  slate200: '#334155',
+  slate100: '#1e293b',
+  
+  // Alertas
+  danger: '#ef4444',
+  dangerLight: '#ef444425',
 };
 
 export type ColorTheme = typeof lightColors;
