@@ -33,7 +33,7 @@ export const StatCard = ({ title, value, subtitle, onPress }: StatCardProps) => 
 
 const createStyles = (theme: any) => StyleSheet.create({
   statCardContainer: {
-    backgroundColor: theme.white,
+    backgroundColor: theme.card,
     borderRadius: 16,
     overflow: 'hidden',
     borderColor: theme.slate100,

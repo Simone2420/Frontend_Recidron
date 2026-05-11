@@ -51,7 +51,7 @@ export const ReportCard = ({ type, location, material, dateStr, foto_url, onPres
 
 const createStyles = (theme: any) => StyleSheet.create({
   reportCardContainer: {
-    backgroundColor: theme.white,
+    backgroundColor: theme.card,
     borderRadius: 16,
     overflow: 'hidden',
     borderColor: theme.slate100,
@@ -59,9 +59,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginBottom: 16,
     flexDirection: 'row',
     height: 120,
-    shadowColor: theme.slate900,
+    shadowColor: theme.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },

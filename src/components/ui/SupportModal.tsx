@@ -45,7 +45,7 @@ export function SupportModal({ visible, onClose }: SupportModalProps) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
-        <View style={[styles.modalContent, { backgroundColor: theme.white }]} onStartShouldSetResponder={() => true}>
+        <View style={[styles.modalContent, { backgroundColor: theme.card }]} onStartShouldSetResponder={() => true}>
           <View style={[styles.modalHeader, { borderBottomColor: theme.slate100 }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <MaterialIcons name="support-agent" size={24} color={theme.primary} />

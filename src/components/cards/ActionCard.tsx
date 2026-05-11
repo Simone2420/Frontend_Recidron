@@ -29,7 +29,7 @@ export const ActionCard = ({ title, icon, onPress }: ActionCardProps) => {
 
 const createStyles = (theme: any) => StyleSheet.create({
   actionCardContainer: {
-    backgroundColor: theme.white,
+    backgroundColor: theme.card,
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',

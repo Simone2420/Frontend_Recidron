@@ -83,7 +83,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.white,
+    backgroundColor: theme.card,
     borderWidth: 1,
     borderColor: theme.slate200,
     borderRadius: 12,
