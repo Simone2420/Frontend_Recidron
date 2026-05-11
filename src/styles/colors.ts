@@ -8,6 +8,8 @@ export const Colors = {
   backgroundDark: '#141e15',
  
   white: '#ffffff',
+  card: '#ffffff',
+  shadow: '#0f172a',
   slate900: '#0f172a',
   slate800: '#1e293b',
   slate700: '#334155',
