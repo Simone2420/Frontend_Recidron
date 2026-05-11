@@ -144,7 +144,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   logoWrapper: {
     width: 96,
     height: 96,
-    backgroundColor: theme.white,
+    backgroundColor: theme.card,
     borderRadius: 48,
     alignItems: 'center',
     justifyContent: 'center',

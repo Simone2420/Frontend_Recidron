@@ -337,9 +337,9 @@ const createStyles = (theme: any) => StyleSheet.create({
   roleBadgeText: { fontSize: 13, fontWeight: '600', color: theme.primary },
   statsGrid: { flexDirection: 'row', gap: 16, paddingHorizontal: 16, paddingVertical: 8 },
   statCard: {
-    flex: 1, backgroundColor: theme.white, borderRadius: 16, padding: 20,
+    flex: 1, backgroundColor: theme.card, borderRadius: 16, padding: 20,
     borderWidth: 1, borderColor: theme.primaryBorder,
-    shadowColor: theme.slate900, shadowOffset: { width: 0, height: 1 },
+    shadowColor: theme.shadow, shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 4, elevation: 2, gap: 8,
   },
   statLabel: { fontSize: 11, fontWeight: '500', color: theme.slate500, textTransform: 'uppercase', letterSpacing: 0.5, lineHeight: 16 },
@@ -348,7 +348,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   optionsList: { paddingHorizontal: 16, paddingTop: 8, gap: 8 },
   optionItem: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: theme.white, borderRadius: 16, padding: 16,
+    backgroundColor: theme.card, borderRadius: 16, padding: 16,
     borderWidth: 1, borderColor: theme.slate100,
   },
   optionLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
@@ -359,7 +359,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   logoutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     paddingVertical: 16, borderRadius: 16,
-    backgroundColor: theme.dangerLight, borderWidth: 1, borderColor: '#C6282820',
+    backgroundColor: theme.dangerLight, borderWidth: 1, borderColor: theme.dangerLight,
   },
   logoutText: { fontSize: 15, fontWeight: 'bold', color: theme.danger },
 
@@ -370,7 +370,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'flex-end',
   },
   bottomSheet: {
-    backgroundColor: theme.white,
+    backgroundColor: theme.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
