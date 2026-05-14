@@ -271,8 +271,8 @@ export default function AdminHomeScreen() {
       const baseURL = api.defaults.baseURL?.replace(/\/$/, '');
       if (!baseURL) throw new Error('La URL base no está configurada.');
       
-      const url = `${baseURL}/reportes/exportar/pdf`;
-      const fileUri = `${FileSystem.documentDirectory}reportes_recidron.pdf`;
+      const url = `${baseURL}/stats/exportar/pdf`;
+      const fileUri = `${FileSystem.documentDirectory}resumen_recidron.pdf`;
 
       const downloadRes = await FileSystem.downloadAsync(url, fileUri, {
         headers: { Authorization: `Bearer ${token}` }

@@ -210,10 +210,18 @@ export default function ProfileScreen() {
 
         <View style={styles.spacer} />
 
-        <View style={styles.logoutWrapper}>
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
-            <MaterialIcons name="logout" size={20} color={theme.danger} />
-            <Text style={styles.logoutText}>Cerrar Sesión</Text>
+        <View style={styles.optionsList}>
+          <TouchableOpacity 
+            style={[styles.optionItem, { borderColor: theme.slate100, marginTop: 16 }]} 
+            onPress={handleLogout} 
+            activeOpacity={0.7}
+          >
+            <View style={styles.optionLeft}>
+              <View style={[styles.optionIconWrapper, { backgroundColor: theme.dangerLight }]}>
+                <MaterialIcons name="logout" size={20} color={theme.danger} />
+              </View>
+              <Text style={[styles.optionText, { color: theme.danger, fontWeight: 'bold' }]}>Cerrar Sesión</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
