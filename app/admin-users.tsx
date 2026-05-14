@@ -86,7 +86,7 @@ export default function AdminUsersScreen() {
 
     Alert.alert(
       "Confirmar Acción",
-      `¿Deseas ${actionText} a ${user.full_name || (user as any).nombre || user.email}?`,
+      `¿Deseas ${actionText} a ${(user as any).full_name || user.nombre || user.email}?`,
       [
         { text: "Cancelar", style: "cancel" },
         { 
@@ -204,7 +204,7 @@ export default function AdminUsersScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <MaterialIcons name="arrow-back" size={24} color={theme.white} />
+          <MaterialIcons name="arrow-back" size={24} color={theme.slate500} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Gestión de Usuarios</Text>
         <View style={styles.headerSpacer} />
@@ -238,7 +238,7 @@ export default function AdminUsersScreen() {
             }
             renderItem={({ item }: { item: UserProfile & { rol_id?: number, nombre_rol?: string, nombre?: string } }) => {
               const isAdmin = item.nombre_rol === 'admin';
-              const displayName = item.full_name || item.nombre || 'Sin Nombre';
+              const displayName = (item as any).full_name || item.nombre || 'Sin Nombre';
               const isTargetSuperAdmin = item.email === 'admin@recidron.com';
               const canEdit = isSuperAdmin || !isTargetSuperAdmin;
               
@@ -281,8 +281,8 @@ export default function AdminUsersScreen() {
                           setIsEditModalVisible(true);
                         }}
                       >
-                        <MaterialIcons name="edit" size={16} color={theme.white} />
-                        <Text style={[styles.actionBtnText, {color: theme.white, marginLeft: 4}]}>Editar</Text>
+                        <MaterialIcons name="edit" size={16} color={theme.slate500} />
+                        <Text style={[styles.actionBtnText, {color: theme.slate500, marginLeft: 4}]}>Editar</Text>
                       </TouchableOpacity>
                     )}
 
@@ -402,15 +402,15 @@ const createStyles = (theme: any) => StyleSheet.create({
   header: { 
     flexDirection: 'row', alignItems: 'center', 
     paddingHorizontal: 16, paddingVertical: 14, 
-    backgroundColor: theme.slate800 
+    backgroundColor: theme.slate300 
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20 },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 18, fontWeight: 'bold', color: theme.white, letterSpacing: -0.3 },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 18, fontWeight: 'bold', color: theme.slate500, letterSpacing: -0.3 },
   headerSpacer: { width: 40 },
   content: { flex: 1 },
   listContent: { padding: 16, paddingBottom: 40, gap: 12 },
   userCard: {
-    backgroundColor: theme.white,
+    backgroundColor: theme.card,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
@@ -419,7 +419,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   adminCard: {
     borderColor: theme.primaryBorder,
-    backgroundColor: '#F8FAF9', // Muy leve verde
+    backgroundColor: theme.primaryLight,
   },
   userInfo: {
     flexDirection: 'row',
@@ -430,14 +430,14 @@ const createStyles = (theme: any) => StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: theme.slate100,
+    backgroundColor: theme.primaryBorder,
     alignItems: 'center',
     justifyContent: 'center'
   },
   avatarText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: theme.slate600
+    color: theme.slate300
   },
   userTextCol: {
     flex: 1,
@@ -468,7 +468,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   roleText: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: theme.slate600
+    color: theme.slate900
   },
   actionBtn: {
     flex: 1,
@@ -479,12 +479,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderWidth: 1,
   },
   btnAscender: {
-    backgroundColor: theme.white,
+    backgroundColor: theme.card,
     borderColor: theme.primary,
   },
   btnRevocar: {
     backgroundColor: theme.dangerLight,
-    borderColor: '#C6282820',
+    borderColor: theme.dangerLight,
   },
   actionBtnText: {
     fontSize: 14,
@@ -503,7 +503,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.white,
+    backgroundColor: theme.card,
     margin: 16,
     marginBottom: 0,
     paddingHorizontal: 12,
@@ -535,7 +535,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: theme.white,
+    backgroundColor: theme.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,

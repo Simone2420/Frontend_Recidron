@@ -232,7 +232,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   headerSpacer: { width: 40 },
   searchContainer: { paddingHorizontal: 16, paddingVertical: 8 },
   searchBox: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: theme.white,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: theme.card,
     borderRadius: 16, borderWidth: 2, borderColor: theme.primaryBorder,
     paddingHorizontal: 12, height: 48, gap: 8,
   },

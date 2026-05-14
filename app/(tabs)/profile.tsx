@@ -359,7 +359,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   logoutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     paddingVertical: 16, borderRadius: 16,
-    backgroundColor: theme.dangerLight, borderWidth: 1, borderColor: theme.dangerLight,
+    backgroundColor: theme.dangerLight, borderWidth: 1, borderColor: theme.danger,
   },
   logoutText: { fontSize: 15, fontWeight: 'bold', color: theme.danger },
 

@@ -53,7 +53,7 @@ export default function SettingsScreen() {
           <Text style={[styles.sectionTitle, { color: theme.slate500 }]}>APARIENCIA</Text>
           
           <TouchableOpacity 
-            style={[styles.settingRow, { backgroundColor: theme.white, borderColor: theme.slate100 }]} 
+            style={[styles.settingRow, { backgroundColor: theme.card, borderColor: theme.slate100 }]} 
             activeOpacity={0.7}
             onPress={() => setThemeModalVisible(true)}
           >
@@ -74,7 +74,7 @@ export default function SettingsScreen() {
           <Text style={[styles.sectionTitle, { color: theme.slate500 }]}>SOPORTE</Text>
           
           <TouchableOpacity 
-            style={[styles.settingRow, { backgroundColor: theme.white, borderColor: theme.slate100 }]} 
+            style={[styles.settingRow, { backgroundColor: theme.card, borderColor: theme.slate100 }]} 
             activeOpacity={0.7}
             onPress={() => setSupportVisible(true)}
           >
@@ -92,7 +92,7 @@ export default function SettingsScreen() {
 
         <View style={styles.section}>
           <TouchableOpacity 
-            style={[styles.settingRow, { backgroundColor: theme.white, borderColor: theme.slate100, marginTop: 16 }]} 
+            style={[styles.settingRow, { backgroundColor: theme.card, borderColor: theme.slate100, marginTop: 16 }]} 
             onPress={handleLogout}
             activeOpacity={0.7}
           >
@@ -119,7 +119,7 @@ export default function SettingsScreen() {
           activeOpacity={1} 
           onPress={() => setThemeModalVisible(false)}
         >
-          <View style={[styles.modalContent, { backgroundColor: theme.white }]}>
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
             <View style={[styles.modalHeader, { borderBottomColor: theme.slate100 }]}>
               <Text style={[styles.modalTitle, { color: theme.slate900 }]}>Elige un tema</Text>
               <TouchableOpacity onPress={() => setThemeModalVisible(false)}>

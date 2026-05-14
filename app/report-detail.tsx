@@ -289,7 +289,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     letterSpacing: -0.3,
   },
   card: {
-    backgroundColor: theme.white,
+    backgroundColor: theme.card,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
@@ -322,7 +322,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     color: theme.slate900,
   },
   photoCard: {
-    backgroundColor: theme.white,
+    backgroundColor: theme.card,
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,

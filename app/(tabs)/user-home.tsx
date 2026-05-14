@@ -178,7 +178,7 @@ const createStyles = (theme: any) => StyleSheet.create({
 
   // ── Tarjeta ancha: Mi Rango ──
   rankCard: {
-    backgroundColor: theme.white, borderRadius: 16,
+    backgroundColor: theme.card, borderRadius: 16,
     borderWidth: 1, borderColor: theme.primaryBorder,
     paddingHorizontal: 16, paddingVertical: 14,
     flexDirection: 'row', alignItems: 'center',
