@@ -8,6 +8,11 @@ import { DashboardStats, statsService } from '../../src/services/stats_service';
 import { useAuth } from '../../src/store/authStore';
 import { useTheme } from '../../src/styles/theme';
 import { WasteColors } from '../../src/styles/colors';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import * as SecureStore from 'expo-secure-store';
+import api from '../../src/services/base_service';
+import Toast from 'react-native-toast-message';
 
 // ─── Donut Chart ─────────────────────────────────────────────────────────────
 function DonutChart({ data }: { data: Array<{ label: string; value: number }> }) {
@@ -230,6 +235,7 @@ export default function AdminHomeScreen() {
   const [trends, setTrends] = useState<any[]>([]);
   const [recentReports, setRecentReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -256,6 +262,39 @@ export default function AdminHomeScreen() {
   const handleLogout = () => {
     logout();
     router.replace('/(auth)/login');
+  };
+
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      const token = await SecureStore.getItemAsync('user_token');
+      const baseURL = api.defaults.baseURL?.replace(/\/$/, '');
+      if (!baseURL) throw new Error('La URL base no está configurada.');
+      
+      const url = `${baseURL}/reportes/exportar/pdf`;
+      const fileUri = `${FileSystem.documentDirectory}reportes_recidron.pdf`;
+
+      const downloadRes = await FileSystem.downloadAsync(url, fileUri, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (downloadRes.status !== 200) throw new Error('Error al generar PDF');
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(downloadRes.uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Exportar Reportes',
+        });
+      } else {
+        Toast.show({ type: 'info', text1: 'Archivo guardado', text2: 'No se soporta compartir.' });
+      }
+    } catch (e: any) {
+      console.error('Error exportando PDF:', e);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo generar el PDF.' });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -334,9 +373,15 @@ export default function AdminHomeScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.pdfBtn} activeOpacity={0.85}>
-          <MaterialIcons name="download" size={22} color={theme.white} />
-          <Text style={styles.pdfBtnText}>Descargar Reporte PDF</Text>
+        <TouchableOpacity style={styles.pdfBtn} activeOpacity={0.85} onPress={handleExportPDF} disabled={isExporting}>
+          {isExporting ? (
+            <ActivityIndicator size="small" color={theme.white} />
+          ) : (
+            <MaterialIcons name="download" size={22} color={theme.white} />
+          )}
+          <Text style={styles.pdfBtnText}>
+            {isExporting ? 'Generando PDF...' : 'Descargar Reporte PDF'}
+          </Text>
         </TouchableOpacity>
 
         <View style={{ height: 16 }} />

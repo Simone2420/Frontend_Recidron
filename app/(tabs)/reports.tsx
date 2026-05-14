@@ -7,6 +7,9 @@ import { ReportCard } from '../../src/components/cards';
 import { useTheme } from '../../src/styles/theme';
 import { WasteColors } from '../../src/styles/colors';
 import { wasteService, WasteReport } from '../../src/services/waste_service';
+import * as SecureStore from 'expo-secure-store';
+import api from '../../src/services/base_service';
+import Toast from 'react-native-toast-message';
 import { userService } from '../../src/services/user_service';
 import { useAuth } from '../../src/store/authStore';
 const TYPE_FILTERS = ['Todos', 'Aprovechable', 'Peligroso', 'Orgánico', 'No Aprovechable'] as const;
@@ -230,6 +233,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20 },
   headerTitle: { flex: 1, textAlign: 'center', fontSize: 18, fontWeight: 'bold', color: theme.slate900, letterSpacing: -0.3 },
   headerSpacer: { width: 40 },
+  exportBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20 },
   searchContainer: { paddingHorizontal: 16, paddingVertical: 8 },
   searchBox: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: theme.card,
