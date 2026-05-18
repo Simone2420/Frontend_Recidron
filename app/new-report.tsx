@@ -34,8 +34,6 @@ export default function NewReportScreen() {
   const [selectedZone, setSelectedZone] = useState<number | null>(null);
   const [selectedSize, setSelectedSize] = useState<number | null>(null);
   const [description, setDescription] = useState('');
-  const [otherType, setOtherType] = useState('');
-  const [otherMaterial, setOtherMaterial] = useState('');
   const [photoTaken, setPhotoTaken] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
 
@@ -52,8 +50,8 @@ export default function NewReportScreen() {
         wasteService.getZones(),
         wasteService.getSizes(),
       ]);
-      setTypes(t);
-      setMaterials(m);
+      setTypes(t.filter(item => item.nombre_tipo !== 'Otro'));
+      setMaterials(m.filter(item => item.nombre_material !== 'Otro'));
       setZones(z);
       setSizes(s);
     } catch (error) {
@@ -109,17 +107,6 @@ export default function NewReportScreen() {
     setIsSubmitting(true);
     try {
       let finalDescription = description.trim();
-      
-      const selectedTypeName = types.find(t => t.id === selectedType)?.nombre_tipo;
-      const selectedMaterialName = materials.find(m => m.id === selectedMaterial)?.nombre_material;
-      
-      const extras = [];
-      if (selectedTypeName === 'Otro' && otherType.trim()) extras.push(`Tipo Específico: ${otherType.trim()}`);
-      if (selectedMaterialName === 'Otro' && otherMaterial.trim()) extras.push(`Material Específico: ${otherMaterial.trim()}`);
-      
-      if (extras.length > 0) {
-        finalDescription = extras.join(' | ') + (finalDescription ? `\n\nDescripción adicional: ${finalDescription}` : '');
-      }
 
       const newReport = await wasteService.createReport({
         usuario_id: user.id,
@@ -202,9 +189,6 @@ export default function NewReportScreen() {
   };
 
   const renderStep1 = () => {
-    const selectedTypeName = types.find(t => t.id === selectedType)?.nombre_tipo;
-    const selectedMaterialName = materials.find(m => m.id === selectedMaterial)?.nombre_material;
-
     return (
       <Animated.View entering={FadeInRight} exiting={FadeInLeft} style={styles.stepContainer}>
         <Text style={styles.stepTitle}>Clasificación</Text>
@@ -212,33 +196,9 @@ export default function NewReportScreen() {
 
         <Text style={styles.inputLabelLabel}>Tipo de Residuo</Text>
         {renderCatalogList(types, selectedType, setSelectedType, "tipos")}
-        
-        {selectedTypeName === 'Otro' && (
-          <Animated.View entering={FadeInRight} style={styles.otherInputContainer}>
-            <InputField
-              label="Especifica el Tipo de Residuo"
-              placeholder="Ej: Escombros, Electrónicos..."
-              icon="edit"
-              value={otherType}
-              onChangeText={setOtherType}
-            />
-          </Animated.View>
-        )}
 
         <Text style={[styles.inputLabelLabel, { marginTop: 20 }]}>Material</Text>
         {renderCatalogList(materials, selectedMaterial, setSelectedMaterial, "materiales")}
-        
-        {selectedMaterialName === 'Otro' && (
-          <Animated.View entering={FadeInRight} style={styles.otherInputContainer}>
-            <InputField
-              label="Especifica el Material"
-              placeholder="Ej: Llantas, Baterías, Tela..."
-              icon="edit"
-              value={otherMaterial}
-              onChangeText={setOtherMaterial}
-            />
-          </Animated.View>
-        )}
       </Animated.View>
     );
   };

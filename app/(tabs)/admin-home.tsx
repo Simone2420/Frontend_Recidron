@@ -384,6 +384,17 @@ export default function AdminHomeScreen() {
           </Text>
         </TouchableOpacity>
 
+        <TouchableOpacity 
+          style={[styles.pdfBtn, { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.primary, marginTop: 12 }]} 
+          activeOpacity={0.85} 
+          onPress={() => router.push('/campus-map')}
+        >
+          <MaterialIcons name="map" size={22} color={theme.primary} />
+          <Text style={[styles.pdfBtnText, { color: theme.primary }]}>
+            Ver Mapa Interactivo del Campus
+          </Text>
+        </TouchableOpacity>
+
         <View style={{ height: 16 }} />
 
       </ScrollView>

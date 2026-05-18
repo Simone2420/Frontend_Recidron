@@ -142,6 +142,24 @@ export default function UserHomeScreen() {
                     </View>
                   ))}
                 </View>
+
+                {/* ── Mapa Interactivo Card ── */}
+                <TouchableOpacity
+                  style={[styles.rankCard, { marginTop: 14, borderColor: theme.primary }]}
+                  onPress={() => router.push('/campus-map')}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.rankCardLeft}>
+                    <View style={[styles.rankIconBox, { backgroundColor: theme.primaryLight }]}>
+                      <MaterialIcons name="map" size={28} color={theme.primary} />
+                    </View>
+                    <View>
+                      <Text style={[styles.rankValue, { fontSize: 16 }]}>Mapa del Campus</Text>
+                      <Text style={styles.rankSubtitle}>Ver puntos de reporte</Text>
+                    </View>
+                  </View>
+                  <MaterialIcons name="chevron-right" size={24} color={theme.primary} />
+                </TouchableOpacity>
               </>
             )}
           </Animated.View>
