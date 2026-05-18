@@ -281,8 +281,8 @@ export default function AdminUsersScreen() {
                           setIsEditModalVisible(true);
                         }}
                       >
-                        <MaterialIcons name="edit" size={16} color={theme.slate500} />
-                        <Text style={[styles.actionBtnText, {color: theme.slate500, marginLeft: 4}]}>Editar</Text>
+                        <MaterialIcons name="edit" size={16} color={theme.slate700} />
+                        <Text style={[styles.actionBtnText, {color: theme.slate700, marginLeft: 4}]}>Editar</Text>
                       </TouchableOpacity>
                     )}
 
@@ -525,8 +525,8 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginTop: 4,
   },
   btnEdit: {
-    backgroundColor: theme.slate700,
-    borderColor: theme.slate800,
+    backgroundColor: theme.slate100,
+    borderColor: theme.slate200,
     flexDirection: 'row',
   },
   modalContainer: {

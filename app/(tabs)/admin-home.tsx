@@ -16,7 +16,7 @@ import Toast from 'react-native-toast-message';
 
 // ─── Donut Chart ─────────────────────────────────────────────────────────────
 function DonutChart({ data }: { data: Array<{ label: string; value: number }> }) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const size = 180;
   const cx = size / 2;
@@ -26,7 +26,9 @@ function DonutChart({ data }: { data: Array<{ label: string; value: number }> })
 
   const actualTotal = data.reduce((sum, item) => sum + item.value, 0);
   const divisorTotal = actualTotal || 1; // Para evitar división por cero
-  const colors = ['#2E7D32', '#00695C', '#78909C', '#C62828', '#FBC02D', '#5D4037'];
+  const colors = isDark 
+    ? ['#4ADE80', '#2DD4BF', '#94A3B8', '#F87171', '#FDE047', '#A78BFA'] 
+    : ['#2E7D32', '#00695C', '#78909C', '#C62828', '#FBC02D', '#5D4037'];
 
   const segments = data.map((item, i) => ({
     pct: item.value / divisorTotal,
@@ -422,8 +424,8 @@ const createStyles = (theme: any) => StyleSheet.create({
   kpiCardDanger: { backgroundColor: theme.dangerLight, borderColor: theme.danger },
   kpiLabel: { fontSize: 11, color: theme.slate500, fontWeight: '500', marginBottom: 4 },
   kpiValue: { fontSize: 22, fontWeight: 'bold', color: theme.primary },
-  kpiLabelDanger: { fontSize: 11, color: '#E53935', fontWeight: '500', marginBottom: 4 },
-  kpiValueDanger: { fontSize: 22, fontWeight: 'bold', color: '#C62828' },
+  kpiLabelDanger: { fontSize: 11, color: theme.danger, fontWeight: '500', marginBottom: 4 },
+  kpiValueDanger: { fontSize: 22, fontWeight: 'bold', color: theme.danger },
   chartCard: {
     marginHorizontal: 16, backgroundColor: theme.card, borderRadius: 16,
     borderWidth: 1, borderColor: theme.slate100, overflow: 'hidden',
