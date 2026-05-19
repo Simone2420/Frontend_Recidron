@@ -56,8 +56,12 @@ export default function UserHomeScreen() {
             setLastReport('Sin reportes aún');
           }
         }
-      } catch (err) {
-        console.error('User stats error:', err);
+      } catch (err: any) {
+        if (err.response?.status !== 401) {
+          console.error('User stats error:', err);
+        } else {
+          console.log('Sesión cerrada durante la carga, omitiendo error 401');
+        }
       } finally {
         setLoading(false);
       }

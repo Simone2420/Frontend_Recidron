@@ -51,8 +51,12 @@ export default function ProfileScreen() {
           const totalStat = dashboard.stats.find((s: any) => s.title === "Mis Reportes");
           if (totalStat) setReportCount(totalStat.value);
         }
-      } catch (err) {
-        console.log('Error al cargar perfil o stats:', err);
+      } catch (err: any) {
+        if (err.response?.status !== 401) {
+          console.log('Error al cargar perfil o stats:', err);
+        } else {
+          console.log('Sesión cerrada durante la carga, omitiendo error 401 en perfil');
+        }
       } finally {
         setIsLoading(false);
       }

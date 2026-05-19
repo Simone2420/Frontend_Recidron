@@ -11,9 +11,19 @@ export default function LoginScreen() {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  React.useEffect(() => {
+    if (user) {
+      if (user.role === 'admin') {
+        router.replace('/(tabs)/admin-home');
+      } else {
+        router.replace('/(tabs)/user-home');
+      }
+    }
+  }, [user]);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');

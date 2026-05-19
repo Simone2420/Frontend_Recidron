@@ -254,8 +254,12 @@ export default function AdminHomeScreen() {
       setStats(statsData);
       setTrends(trendData);
       setRecentReports(reportsData.slice(0, 5));
-    } catch (error) {
-      console.log('Error fetching stats:', error);
+    } catch (error: any) {
+      if (error.response?.status !== 401) {
+        console.log('Error fetching stats:', error);
+      } else {
+        console.log('Sesión cerrada durante la carga, omitiendo error 401');
+      }
     } finally {
       setLoading(false);
     }

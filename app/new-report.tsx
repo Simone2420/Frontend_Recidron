@@ -62,6 +62,17 @@ export default function NewReportScreen() {
   };
 
   const handleNext = () => {
+    if (step === 1) {
+      if (!selectedType || !selectedMaterial) {
+        Toast.show({ type: 'error', text1: 'Campos incompletos', text2: 'Por favor selecciona el tipo de residuo y el material.' });
+        return;
+      }
+    } else if (step === 2) {
+      if (!selectedZone) {
+        Toast.show({ type: 'error', text1: 'Campos incompletos', text2: 'Por favor selecciona la zona del campus.' });
+        return;
+      }
+    }
     if (step < 3) setStep(step + 1);
   };
 

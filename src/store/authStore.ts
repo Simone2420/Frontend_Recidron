@@ -16,6 +16,7 @@ interface AuthState {
   setUser: (user: AuthUser | null) => void;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  checkSession: () => Promise<void>;
 }
 
 import { authService } from '../services/auth_service';
@@ -43,6 +44,7 @@ export const useAuth = create<AuthState>((set) => ({
 
       if (data.token) {
         await SecureStore.setItemAsync('user_token', data.token);
+        await SecureStore.setItemAsync('user_data', JSON.stringify(userData));
       }
 
       set({ user: userData });
@@ -54,6 +56,17 @@ export const useAuth = create<AuthState>((set) => ({
   },
   logout: async () => {
     await SecureStore.deleteItemAsync('user_token');
+    await SecureStore.deleteItemAsync('user_data');
     set({ user: null });
+  },
+  checkSession: async () => {
+    try {
+      const userStr = await SecureStore.getItemAsync('user_data');
+      if (userStr) {
+        set({ user: JSON.parse(userStr) });
+      }
+    } catch (e) {
+      console.log('Error checking session', e);
+    }
   },
 }));
