@@ -32,5 +32,6 @@ export const WasteColors: Record<string, { bg: string; text: string }> = {
   'Aprovechable':      { bg: '#2E7D3218', text: '#2E7D32' },
   'Peligroso':         { bg: '#C6282818', text: '#C62828' },
   'Orgánico':          { bg: '#00695C18', text: '#00695C' },
-  'No Aprovechable': { bg: '#78909C18', text: '#78909C' },
+  'No Aprovechable':   { bg: '#78909C18', text: '#78909C' },
+  'Otro':              { bg: '#455A6418', text: '#455A64' },
 };

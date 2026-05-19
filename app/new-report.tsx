@@ -50,8 +50,8 @@ export default function NewReportScreen() {
         wasteService.getZones(),
         wasteService.getSizes(),
       ]);
-      setTypes(t.filter(item => item.nombre_tipo !== 'Otro'));
-      setMaterials(m.filter(item => item.nombre_material !== 'Otro'));
+      setTypes(t);
+      setMaterials(m);
       setZones(z);
       setSizes(s);
     } catch (error) {
