@@ -1,18 +1,33 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { Button, InputField } from '../../src/components/ui';
+import { Button, InputField, SupportModal } from '../../src/components/ui';
 import { useAuth } from '../../src/store/authStore';
-import { Colors } from '../../src/styles/colors';
+import { useTheme } from '../../src/styles/theme';
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  const { login, user } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  React.useEffect(() => {
+    if (user) {
+      if (user.role === 'admin') {
+        router.replace('/(tabs)/admin-home');
+      } else {
+        router.replace('/(tabs)/user-home');
+      }
+    }
+  }, [user]);
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [supportVisible, setSupportVisible] = useState(false);
 
   const handleLogin = async () => {
     setError('');
@@ -24,7 +39,7 @@ export default function LoginScreen() {
 
     setIsLoading(true);
 
-    const { success, error: loginError } = await login(email, password);
+    const { success, error: loginError } = await login(email.trim(), password);
     
     setIsLoading(false);
 
@@ -50,7 +65,7 @@ export default function LoginScreen() {
 
         <Animated.View entering={FadeInDown.duration(800).delay(200)} style={styles.headerContainer}>
           <View style={styles.logoWrapper}>
-            <MaterialIcons name="recycling" size={60} color={Colors.primary} />
+            <MaterialIcons name="recycling" size={60} color={theme.primary} />
           </View>
           <Text style={styles.title}>Recidron</Text>
           <Text style={styles.subtitle}>Gestión de Residuos — UniCundinamarca</Text>
@@ -72,7 +87,9 @@ export default function LoginScreen() {
             icon="lock"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={!showPassword}
+            rightIcon={showPassword ? "visibility" : "visibility-off"}
+            onRightIconPress={() => setShowPassword(!showPassword)}
           />
           <View style={styles.forgotPasswordContainer}>
             <Button
@@ -98,7 +115,17 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </Animated.View>
 
+        <Animated.View entering={FadeIn.duration(800).delay(800)} style={{ alignItems: 'center', marginTop: 16 }}>
+          <TouchableOpacity activeOpacity={0.7} onPress={() => setSupportVisible(true)}>
+            <Text style={{ color: theme.slate500, fontSize: 13, textDecorationLine: 'underline' }}>
+              ¿Necesitas Ayuda? Contactar Soporte
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+
       </ScrollView>
+
+      <SupportModal visible={supportVisible} onClose={() => setSupportVisible(false)} />
 
       <View style={styles.waveContainer} pointerEvents="none">
         <View style={styles.waveLayer1} />
@@ -108,10 +135,10 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.backgroundLight,
+    backgroundColor: theme.backgroundLight,
   },
   scrollContent: {
     flexGrow: 1,
@@ -127,12 +154,12 @@ const styles = StyleSheet.create({
   logoWrapper: {
     width: 96,
     height: 96,
-    backgroundColor: Colors.white,
+    backgroundColor: theme.card,
     borderRadius: 48,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
-    shadowColor: Colors.primary,
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -141,13 +168,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: Colors.slate900,
+    color: theme.slate900,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: Colors.slate500,
+    color: theme.slate500,
     textAlign: 'center',
   },
   formContainer: {
@@ -167,7 +194,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   errorText: {
-    color: Colors.danger,
+    color: theme.danger,
     textAlign: 'center',
     marginBottom: 16,
     fontSize: 14,
@@ -179,11 +206,11 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
   },
   footerText: {
-    color: Colors.slate500,
+    color: theme.slate500,
     fontSize: 14,
   },
   registerText: {
-    color: Colors.primary,
+    color: theme.primary,
     fontWeight: 'bold',
     fontSize: 14,
   },
@@ -202,7 +229,7 @@ const styles = StyleSheet.create({
     left: -100,
     right: -100,
     height: 300,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     borderTopLeftRadius: 1000,
     borderTopRightRadius: 1000,
     opacity: 0.5,
@@ -214,7 +241,7 @@ const styles = StyleSheet.create({
     left: -50,
     right: -150,
     height: 300,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     borderTopLeftRadius: 800,
     borderTopRightRadius: 1200,
     opacity: 0.8,

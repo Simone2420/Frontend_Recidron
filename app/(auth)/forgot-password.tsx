@@ -1,32 +1,34 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Button, InputField } from '../../src/components/ui';
 import { authService } from '../../src/services/auth_service';
-import { Colors } from '../../src/styles/colors';
+import { useTheme } from '../../src/styles/theme';
 
 export default function ForgotPasswordScreen() {
-  const [email, setEmail] = useState('');
-  const [isSuccess, setIsSuccess] = useState(false);
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
+  const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleRecover = async () => {
     setError('');
+    if (email.length < 4) {
+      setError('Por favor, ingresa un correo válido.');
+      return;
+    }
     setIsLoading(true);
     try {
-      if(email.length > 3) {
-        await authService.recoverPassword(email);
-        setIsSuccess(true);
-      } else {
-        setError('Por favor, ingresa un correo válido.');
-      }
+      await authService.recoverPassword(email);
+      // Navegar directamente a la pantalla de código, pasando el email
+      router.push({ pathname: '/(auth)/reset-password' as any, params: { email } });
     } catch (err: any) {
       setError(err.response?.data?.detail || 'No se pudo enviar el correo de recuperación.');
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -40,75 +42,63 @@ export default function ForgotPasswordScreen() {
       <SafeAreaView style={{ flex: 1 }}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <MaterialIcons name="arrow-back" size={24} color={Colors.slate900} />
+            <MaterialIcons name="arrow-back" size={24} color={theme.slate900} />
           </TouchableOpacity>
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {!isSuccess ? (
-            <Animated.View entering={FadeInDown.duration(600)} style={styles.formSection}>
-              <View style={styles.iconCircle}>
-                <MaterialIcons name="lock-reset" size={48} color={Colors.primary} />
-              </View>
-              <Text style={styles.title}>Recuperar Acceso</Text>
-              <Text style={styles.subtitle}>
-                Ingresa tu correo institucional registrado y te enviaremos instrucciones para generar una nueva contraseña.
-              </Text>
+          <Animated.View entering={FadeInDown.duration(600)} style={styles.formSection}>
+            <View style={styles.iconCircle}>
+              <MaterialIcons name="lock-reset" size={48} color={theme.primary} />
+            </View>
+            <Text style={styles.title}>Recuperar Acceso</Text>
+            <Text style={styles.subtitle}>
+              Ingresa tu correo institucional registrado y te enviaremos un código de verificación.
+            </Text>
 
-              <View style={styles.inputArea}>
-                <InputField
-                  label="Correo Electrónico"
-                  placeholder="usuario@unicundinamarca.edu.co"
-                  icon="mail"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-              {error ? <Text style={{color: Colors.danger, marginBottom: 12, textAlign: 'center'}}>{error}</Text> : null}
-
-              <Button
-                title="Enviar Enlace de Recuperación"
-                onPress={handleRecover}
-                isLoading={isLoading}
+            <View style={styles.inputArea}>
+              <InputField
+                label="Correo Electrónico"
+                placeholder="usuario@unicundinamarca.edu.co"
+                icon="mail"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
               />
-            </Animated.View>
-          ) : (
-            <Animated.View entering={FadeIn.duration(800)} style={styles.successSection}>
-              <View style={styles.successCircle}>
-                <MaterialIcons name="mark-email-read" size={56} color={Colors.white} />
-              </View>
-              <Text style={styles.successTitle}>¡Revisa tu buzón!</Text>
-              <Text style={styles.successSubtitle}>
-                Hemos enviado un enlace temporal con código biométrico a: {'\n'}
-                <Text style={styles.successEmailText}>{email}</Text>
+            </View>
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+            <Button
+              title="Enviar Código de Recuperación"
+              onPress={handleRecover}
+              isLoading={isLoading}
+            />
+
+            {/* Acceso directo si ya se recibió el código anteriormente */}
+            <TouchableOpacity
+              style={styles.alreadyCodeContainer}
+              onPress={() => router.push({ pathname: '/(auth)/reset-password', params: { email } })}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.alreadyCodeText}>
+                ¿Ya tienes un código?{' '}
+                <Text style={styles.alreadyCodeLink}>Ingrésalo aquí</Text>
               </Text>
+            </TouchableOpacity>
 
-              <View style={styles.infoBox}>
-                <MaterialIcons name="info-outline" size={20} color={Colors.primary} />
-                <Text style={styles.infoText}>
-                  El enlace expirará de tu buzón universitario en 15 minutos por tu seguridad.
-                </Text>
-              </View>
-
-              <Button
-                title="Volver al Login"
-                onPress={() => router.replace('/(auth)/login')}
-                style={styles.returnBtn}
-              />
-            </Animated.View>
-          )}
+          </Animated.View>
         </ScrollView>
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.backgroundLight,
+    backgroundColor: theme.backgroundLight,
   },
   header: {
     paddingHorizontal: 16,
@@ -119,9 +109,9 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.white,
+    backgroundColor: theme.card,
     borderRadius: 20,
-    shadowColor: Colors.slate900,
+    shadowColor: theme.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -140,7 +130,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
@@ -148,12 +138,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.slate900,
+    color: theme.slate900,
     marginBottom: 12,
   },
   subtitle: {
     fontSize: 15,
-    color: Colors.slate500,
+    color: theme.slate500,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 32,
@@ -163,61 +153,23 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 24,
   },
-  
-  // -- Success view --
-  successSection: {
-    alignItems: 'center',
-    marginTop: -40, // Centrar perceptualmente
-  },
-  successCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  successTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: Colors.slate900,
-    marginBottom: 12,
-  },
-  successSubtitle: {
-    fontSize: 15,
-    color: Colors.slate500,
+  errorText: {
+    color: theme.danger,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 32,
-  },
-  successEmailText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.slate900,
-  },
-  infoBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primaryLight,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 32,
-    gap: 12,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 13,
-    color: Colors.primary,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  returnBtn: {
+    marginBottom: 12,
+    fontSize: 14,
     width: '100%',
+  },
+  alreadyCodeContainer: {
+    marginTop: 20,
+  },
+  alreadyCodeText: {
+    fontSize: 13,
+    color: theme.slate500,
+    textAlign: 'center',
+  },
+  alreadyCodeLink: {
+    color: theme.primary,
+    fontWeight: '600',
   },
 });

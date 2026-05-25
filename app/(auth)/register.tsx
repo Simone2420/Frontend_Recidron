@@ -1,25 +1,41 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Button, InputField } from '../../src/components/ui';
-import { Colors } from '../../src/styles/colors';
+import { useTheme } from '../../src/styles/theme';
 import { authService } from '../../src/services/auth_service';
 
 export default function RegisterScreen() {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const [fullName, setFullName] = useState('');
   const [studentCode, setStudentCode] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleRegister = async () => {
     setError('');
 
-    if (!fullName || !studentCode || !email || !password) {
+    if (!fullName || !studentCode || !email || !password || !confirmPassword) {
       setError('Por favor, completa todos los campos para registrarte.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
+
+    if (password.length < 8) {
+      setError('La contraseña debe tener mínimo 8 caracteres.');
       return;
     }
 
@@ -55,7 +71,7 @@ export default function RegisterScreen() {
 
         <Animated.View entering={FadeInDown.duration(800).delay(100)} style={styles.headerContainer}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <MaterialIcons name="arrow-back" size={24} color={Colors.slate900} />
+            <MaterialIcons name="arrow-back" size={24} color={theme.slate900} />
           </TouchableOpacity>
           <Text style={styles.title}>Crea tu cuenta</Text>
           <Text style={styles.subtitle}>Súmate al control responsable de la Universidad con Recidron</Text>
@@ -93,7 +109,19 @@ export default function RegisterScreen() {
             icon="lock"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={!showPassword}
+            rightIcon={showPassword ? "visibility" : "visibility-off"}
+            onRightIconPress={() => setShowPassword(!showPassword)}
+          />
+          <InputField
+            label="Confirmar contraseña"
+            placeholder="Repite tu contraseña"
+            icon="lock"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry={!showConfirmPassword}
+            rightIcon={showConfirmPassword ? "visibility" : "visibility-off"}
+            onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
           />
           
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -124,10 +152,10 @@ export default function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.backgroundLight,
+    backgroundColor: theme.backgroundLight,
   },
   scrollContent: {
     flexGrow: 1,
@@ -144,11 +172,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.white,
+    backgroundColor: theme.card,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-    shadowColor: Colors.slate900,
+    shadowColor: theme.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -157,13 +185,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.slate900,
+    color: theme.slate900,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.slate500,
+    color: theme.slate500,
     lineHeight: 20,
   },
   formContainer: {
@@ -174,7 +202,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   errorText: {
-    color: Colors.danger,
+    color: theme.danger,
     textAlign: 'center',
     marginBottom: 16,
     fontSize: 14,
@@ -187,11 +215,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   footerText: {
-    color: Colors.slate500,
+    color: theme.slate500,
     fontSize: 14,
   },
   loginText: {
-    color: Colors.primary,
+    color: theme.primary,
     fontWeight: 'bold',
     fontSize: 14,
   },
@@ -210,7 +238,7 @@ const styles = StyleSheet.create({
     left: -100,
     right: -100,
     height: 300,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     borderTopLeftRadius: 1000,
     borderTopRightRadius: 1000,
     opacity: 0.5,
@@ -222,7 +250,7 @@ const styles = StyleSheet.create({
     left: -50,
     right: -150,
     height: 300,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     borderTopLeftRadius: 800,
     borderTopRightRadius: 1200,
     opacity: 0.8,

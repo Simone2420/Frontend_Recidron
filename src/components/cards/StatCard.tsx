@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../../styles/theme';
 
 export interface StatCardProps {
   title: string;
@@ -11,6 +11,8 @@ export interface StatCardProps {
 
 export const StatCard = ({ title, value, subtitle, onPress }: StatCardProps) => {
   const Container = onPress ? TouchableOpacity : View;
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <Container
@@ -22,24 +24,24 @@ export const StatCard = ({ title, value, subtitle, onPress }: StatCardProps) => 
         <Text style={styles.statCardTitle}>{title}</Text>
       </View>
       <View style={styles.statCardBody}>
-        <Text style={styles.statCardValue} numberOfLines={1}>{value}</Text>
+        <Text style={styles.statCardValue} adjustsFontSizeToFit numberOfLines={1} minimumFontScale={0.5}>{value}</Text>
         <Text style={styles.statCardSubtitle}>{subtitle}</Text>
       </View>
     </Container>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   statCardContainer: {
-    backgroundColor: Colors.white,
+    backgroundColor: theme.card,
     borderRadius: 16,
     overflow: 'hidden',
-    borderColor: Colors.slate100,
+    borderColor: theme.slate100,
     borderWidth: 1,
     flex: 1,
   },
   statCardHeader: {
-    backgroundColor: Colors.primary,
+    backgroundColor: theme.primary,
     padding: 16,
     borderBottomWidth: 0,
   },
@@ -55,13 +57,13 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   statCardValue: {
-    color: Colors.slate900,
-    fontSize: 28,
+    color: theme.slate900,
+    fontSize: 22,
     fontWeight: 'bold',
     letterSpacing: -0.5,
   },
   statCardSubtitle: {
-    color: Colors.primary,
+    color: theme.primary,
     fontSize: 12,
     fontWeight: '500',
     marginTop: 4,

@@ -7,6 +7,7 @@ interface AuthUser {
   email: string;
   nombre: string;
   role: Role;
+  rol_id?: number;
   token?: string;
 }
 
@@ -15,6 +16,7 @@ interface AuthState {
   setUser: (user: AuthUser | null) => void;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  checkSession: () => Promise<void>;
 }
 
 import { authService } from '../services/auth_service';
@@ -26,18 +28,23 @@ export const useAuth = create<AuthState>((set) => ({
   login: async (email, password) => {
     try {
       const data = await authService.login(email, password);
-      // El backend devuelve el nombre del rol (admin/autor)
-      const role: Role = data.rol === 'admin' ? 'admin' : 'user';
+      console.log('[AuthStore] Respuesta del backend:', data); // debug temporal
+      // El backend devuelve data.rol = nombre del rol ('admin' | 'autor')
+      // También comparamos por rol_id === 1 como respaldo
+      const esAdmin = data.rol === 'admin' || data.rol_id === 1;
+      const role: Role = esAdmin ? 'admin' : 'user';
       const userData: AuthUser = {
         id: data.id,
         email: data.email,
         nombre: data.nombre,
         role,
+        rol_id: data.rol_id,
         token: data.token
       };
 
       if (data.token) {
         await SecureStore.setItemAsync('user_token', data.token);
+        await SecureStore.setItemAsync('user_data', JSON.stringify(userData));
       }
 
       set({ user: userData });
@@ -49,6 +56,17 @@ export const useAuth = create<AuthState>((set) => ({
   },
   logout: async () => {
     await SecureStore.deleteItemAsync('user_token');
+    await SecureStore.deleteItemAsync('user_data');
     set({ user: null });
+  },
+  checkSession: async () => {
+    try {
+      const userStr = await SecureStore.getItemAsync('user_data');
+      if (userStr) {
+        set({ user: JSON.parse(userStr) });
+      }
+    } catch (e) {
+      console.log('Error checking session', e);
+    }
   },
 }));

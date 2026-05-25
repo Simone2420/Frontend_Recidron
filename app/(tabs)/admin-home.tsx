@@ -1,14 +1,23 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState, useMemo } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import Svg, { Circle, Defs, LinearGradient, Path, Polyline, Rect, Stop } from 'react-native-svg';
 import { DashboardStats, statsService } from '../../src/services/stats_service';
 import { useAuth } from '../../src/store/authStore';
-import { Colors, WasteColors } from '../../src/styles/colors';
+import { useTheme } from '../../src/styles/theme';
+import { WasteColors } from '../../src/styles/colors';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import * as SecureStore from 'expo-secure-store';
+import api from '../../src/services/base_service';
+import Toast from 'react-native-toast-message';
 
 // ─── Donut Chart ─────────────────────────────────────────────────────────────
 function DonutChart({ data }: { data: Array<{ label: string; value: number }> }) {
+  const { theme, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const size = 180;
   const cx = size / 2;
   const cy = size / 2;
@@ -17,7 +26,9 @@ function DonutChart({ data }: { data: Array<{ label: string; value: number }> })
 
   const actualTotal = data.reduce((sum, item) => sum + item.value, 0);
   const divisorTotal = actualTotal || 1; // Para evitar división por cero
-  const colors = ['#2E7D32', '#00695C', '#78909C', '#C62828', '#FBC02D', '#5D4037'];
+  const colors = isDark 
+    ? ['#4ADE80', '#2DD4BF', '#94A3B8', '#F87171', '#FDE047', '#A78BFA'] 
+    : ['#2E7D32', '#00695C', '#78909C', '#C62828', '#FBC02D', '#5D4037'];
 
   const segments = data.map((item, i) => ({
     pct: item.value / divisorTotal,
@@ -39,7 +50,7 @@ function DonutChart({ data }: { data: Array<{ label: string; value: number }> })
     <View style={{ alignItems: 'center' }}>
       <View style={{ width: size, height: size }}>
         <Svg width={size} height={size}>
-          <Circle cx={cx} cy={cy} r={r} fill="none" stroke={Colors.slate100} strokeWidth={strokeWidth} />
+          <Circle cx={cx} cy={cy} r={r} fill="none" stroke={theme.slate100} strokeWidth={strokeWidth} />
           {actualTotal > 0 && arcs.map((arc, i) => (
             <Circle
               key={i} cx={cx} cy={cy} r={r} fill="none"
@@ -64,7 +75,7 @@ function DonutChart({ data }: { data: Array<{ label: string; value: number }> })
             </View>
           ))
         ) : (
-          <Text style={{ color: Colors.slate400, fontSize: 12, marginTop: 16 }}>No hay datos registrados</Text>
+          <Text style={{ color: theme.slate400, fontSize: 12, marginTop: 16 }}>No hay datos registrados</Text>
         )}
       </View>
     </View>
@@ -73,6 +84,8 @@ function DonutChart({ data }: { data: Array<{ label: string; value: number }> })
 
 // ─── Bar Chart ────────────────────────────────────────────────────────────────
 function BarChart({ data }: { data: Array<{ label: string; value: number }> }) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const max = Math.max(...data.map(d => d.value), 1);
   const chartH = 120;
   const barW = 40;
@@ -89,7 +102,7 @@ function BarChart({ data }: { data: Array<{ label: string; value: number }> }) {
             const y = chartH - barH - 20;
             const opacity = 0.5 + (item.value / max) * 0.5;
             return (
-              <Rect key={item.label} x={x} y={y} width={barW} height={barH} rx={4} fill={Colors.primary} fillOpacity={opacity} />
+              <Rect key={item.label} x={x} y={y} width={barW} height={barH} rx={4} fill={theme.primary} fillOpacity={opacity} />
             );
           })}
         </Svg>
@@ -108,6 +121,8 @@ function BarChart({ data }: { data: Array<{ label: string; value: number }> }) {
 
 // ─── Line Chart ───────────────────────────────────────────────────────────────
 function LineChart({ data }: { data: Array<{ fecha: string; cantidad: number }> }) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   if (!data || data.length === 0) return <View style={{ height: 100, justifyContent: 'center' }}><Text>Sin datos</Text></View>;
 
   const points = data.map(d => d.cantidad);
@@ -137,12 +152,12 @@ function LineChart({ data }: { data: Array<{ fecha: string; cantidad: number }> 
       <Svg width={w} height={h}>
         <Defs>
           <LinearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor={Colors.primary} stopOpacity={0.2} />
-            <Stop offset="100%" stopColor={Colors.primary} stopOpacity={0} />
+            <Stop offset="0%" stopColor={theme.primary} stopOpacity={0.2} />
+            <Stop offset="100%" stopColor={theme.primary} stopOpacity={0} />
           </LinearGradient>
         </Defs>
         <Path d={areaPath} fill="url(#lineGrad)" />
-        <Polyline points={polyline} fill="none" stroke={Colors.primary} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+        <Polyline points={polyline} fill="none" stroke={theme.primary} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
       </Svg>
       <View style={styles.lineLabelsRow}>
         <Text style={styles.lineLabel}>{data[0].fecha}</Text>
@@ -154,6 +169,8 @@ function LineChart({ data }: { data: Array<{ fecha: string; cantidad: number }> 
 
 // ─── Horizontal Bars ──────────────────────────────────────────────────────────
 function HorizontalBars({ data }: { data: Array<{ label: string; value: number }> }) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const max = Math.max(...data.map(d => d.value), 1);
   return (
     <View style={styles.hBarsContainer}>
@@ -168,7 +185,7 @@ function HorizontalBars({ data }: { data: Array<{ label: string; value: number }
           </View>
         </View>
       ))}
-      {data.length === 0 && <Text style={{ textAlign: 'center', color: Colors.slate400 }}>Sin datos de materiales</Text>}
+      {data.length === 0 && <Text style={{ textAlign: 'center', color: theme.slate400 }}>Sin datos de materiales</Text>}
     </View>
   );
 }
@@ -176,6 +193,8 @@ function HorizontalBars({ data }: { data: Array<{ label: string; value: number }
 // ─── Recent Report Row ────────────────────────────────────────────────────────
 type WasteType = keyof typeof WasteColors;
 function RecentReportRow({ type, location, time, onPress }: { type: WasteType; location: string; time: string; onPress?: () => void }) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const colors = WasteColors[type] || WasteColors['No Aprovechable'];
   return (
     <TouchableOpacity style={styles.recentRow} onPress={onPress} activeOpacity={onPress ? 0.7 : 1}>
@@ -187,7 +206,7 @@ function RecentReportRow({ type, location, time, onPress }: { type: WasteType; l
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
         <Text style={styles.recentTime}>{time}</Text>
-        {onPress && <MaterialIcons name="chevron-right" size={16} color={Colors.slate400} />}
+        {onPress && <MaterialIcons name="chevron-right" size={16} color={theme.slate400} />}
       </View>
     </TouchableOpacity>
   );
@@ -195,11 +214,13 @@ function RecentReportRow({ type, location, time, onPress }: { type: WasteType; l
 
 // ─── Chart Card ───────────────────────────────────────────────────────────────
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.chartCard}>
       <View style={styles.chartCardHeader}>
         <Text style={styles.chartCardTitle}>{title}</Text>
-        <MaterialIcons name="info-outline" size={18} color={Colors.slate400} />
+        <MaterialIcons name="info-outline" size={18} color={theme.slate400} />
       </View>
       <View style={styles.chartCardBody}>{children}</View>
     </View>
@@ -208,11 +229,15 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function AdminHomeScreen() {
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const { logout } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [trends, setTrends] = useState<any[]>([]);
   const [recentReports, setRecentReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -229,8 +254,12 @@ export default function AdminHomeScreen() {
       setStats(statsData);
       setTrends(trendData);
       setRecentReports(reportsData.slice(0, 5));
-    } catch (error) {
-      console.log('Error fetching stats:', error);
+    } catch (error: any) {
+      if (error.response?.status !== 401) {
+        console.log('Error fetching stats:', error);
+      } else {
+        console.log('Sesión cerrada durante la carga, omitiendo error 401');
+      }
     } finally {
       setLoading(false);
     }
@@ -241,11 +270,44 @@ export default function AdminHomeScreen() {
     router.replace('/(auth)/login');
   };
 
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      const token = await SecureStore.getItemAsync('user_token');
+      const baseURL = api.defaults.baseURL?.replace(/\/$/, '');
+      if (!baseURL) throw new Error('La URL base no está configurada.');
+      
+      const url = `${baseURL}/stats/exportar/pdf`;
+      const fileUri = `${FileSystem.documentDirectory}resumen_recidron.pdf`;
+
+      const downloadRes = await FileSystem.downloadAsync(url, fileUri, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (downloadRes.status !== 200) throw new Error('Error al generar PDF');
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(downloadRes.uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Exportar Reportes',
+        });
+      } else {
+        Toast.show({ type: 'info', text1: 'Archivo guardado', text2: 'No se soporta compartir.' });
+      }
+    } catch (e: any) {
+      console.error('Error exportando PDF:', e);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo generar el PDF.' });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.topHeader}>
         <View style={styles.topHeaderIcon}>
-          <MaterialIcons name="security" size={24} color={Colors.white} />
+          <MaterialIcons name="security" size={24} color={theme.white} />
         </View>
         <Text style={styles.topHeaderTitle}>Panel de Administración</Text>
       </View>
@@ -253,7 +315,7 @@ export default function AdminHomeScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
         {loading ? (
-          <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 24 }} />
+          <ActivityIndicator size="large" color={theme.primary} style={{ marginTop: 24 }} />
         ) : (
           <>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.kpiRow}>
@@ -289,7 +351,7 @@ export default function AdminHomeScreen() {
           <View style={styles.chartCardHeader}>
             <Text style={styles.chartCardTitle}>Reportes recientes</Text>
             <TouchableOpacity onPress={() => router.push('/(tabs)/reports')}>
-              <Text style={{ fontSize: 12, color: Colors.primary, fontWeight: '600' }}>Ver todos</Text>
+              <Text style={{ fontSize: 12, color: theme.primary, fontWeight: '600' }}>Ver todos</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.recentList}>
@@ -301,7 +363,7 @@ export default function AdminHomeScreen() {
                     location={report.zona_nombre || report.descripcion?.slice(0, 40) || 'Ubicación desconocida'}
                     time={
                       report.fecha_reporte
-                        ? new Date(report.fecha_reporte.replace(' ', 'T')).toLocaleString('es-CO', {
+                        ? new Date(report.fecha_reporte.replace(' ', 'T') + 'Z').toLocaleString('es-CO', {
                             day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
                           })
                         : 'Reciente'
@@ -312,121 +374,113 @@ export default function AdminHomeScreen() {
                 </React.Fragment>
               ))
             ) : (
-              <Text style={{ padding: 16, textAlign: 'center', color: Colors.slate400 }}>No hay reportes recientes</Text>
+              <Text style={{ padding: 16, textAlign: 'center', color: theme.slate400 }}>No hay reportes recientes</Text>
             )}
           </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.usersBtn}
-          activeOpacity={0.85}
-          onPress={() => router.push('/admin-users')}
+        <TouchableOpacity style={styles.pdfBtn} activeOpacity={0.85} onPress={handleExportPDF} disabled={isExporting}>
+          {isExporting ? (
+            <ActivityIndicator size="small" color={theme.white} />
+          ) : (
+            <MaterialIcons name="download" size={22} color={theme.white} />
+          )}
+          <Text style={styles.pdfBtnText}>
+            {isExporting ? 'Generando PDF...' : 'Descargar Reporte PDF'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.pdfBtn, { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.primary, marginTop: 12 }]} 
+          activeOpacity={0.85} 
+          onPress={() => router.push('/campus-map')}
         >
-          <MaterialIcons name="people" size={22} color={Colors.white} />
-          <Text style={styles.usersBtnText}>Gestión de Usuarios y Roles</Text>
+          <MaterialIcons name="map" size={22} color={theme.primary} />
+          <Text style={[styles.pdfBtnText, { color: theme.primary }]}>
+            Ver Mapa Interactivo del Campus
+          </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.pdfBtn} activeOpacity={0.85}>
-          <MaterialIcons name="download" size={22} color={Colors.white} />
-          <Text style={styles.pdfBtnText}>Descargar Reporte PDF</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
-          <MaterialIcons name="logout" size={20} color={Colors.danger} />
-          <Text style={styles.logoutText}>Cerrar Sesión</Text>
-        </TouchableOpacity>
+        <View style={{ height: 16 }} />
 
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: Colors.backgroundLight },
+const createStyles = (theme: any) => StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: theme.backgroundLight },
   topHeader: {
-    backgroundColor: Colors.primary,
+    backgroundColor: theme.primary,
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingHorizontal: 16, paddingVertical: 14,
   },
   topHeaderIcon: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 10 },
-  topHeaderTitle: { fontSize: 18, fontWeight: 'bold', color: Colors.white, letterSpacing: -0.3 },
+  topHeaderTitle: { fontSize: 18, fontWeight: 'bold', color: theme.white, letterSpacing: -0.3 },
   scrollContent: { paddingBottom: 48, gap: 16 },
   kpiRow: { paddingHorizontal: 16, paddingTop: 16, gap: 12 },
   kpiCard: {
-    minWidth: 140, backgroundColor: Colors.white, borderRadius: 16, padding: 12,
-    borderWidth: 1, borderColor: Colors.primaryBorder,
-    shadowColor: Colors.slate900, shadowOffset: { width: 0, height: 1 },
+    minWidth: 140, backgroundColor: theme.card, borderRadius: 16, padding: 12,
+    borderWidth: 1, borderColor: theme.primaryBorder,
+    shadowColor: theme.slate900, shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
-  kpiCardDanger: { backgroundColor: '#FFF5F5', borderColor: '#FFCDD2' },
-  kpiLabel: { fontSize: 11, color: Colors.slate500, fontWeight: '500', marginBottom: 4 },
-  kpiValue: { fontSize: 22, fontWeight: 'bold', color: Colors.primary },
-  kpiLabelDanger: { fontSize: 11, color: '#E53935', fontWeight: '500', marginBottom: 4 },
-  kpiValueDanger: { fontSize: 22, fontWeight: 'bold', color: '#C62828' },
+  kpiCardDanger: { backgroundColor: theme.dangerLight, borderColor: theme.danger },
+  kpiLabel: { fontSize: 11, color: theme.slate500, fontWeight: '500', marginBottom: 4 },
+  kpiValue: { fontSize: 22, fontWeight: 'bold', color: theme.primary },
+  kpiLabelDanger: { fontSize: 11, color: theme.danger, fontWeight: '500', marginBottom: 4 },
+  kpiValueDanger: { fontSize: 22, fontWeight: 'bold', color: theme.danger },
   chartCard: {
-    marginHorizontal: 16, backgroundColor: Colors.white, borderRadius: 16,
-    borderWidth: 1, borderColor: Colors.slate100, overflow: 'hidden',
-    shadowColor: Colors.slate900, shadowOffset: { width: 0, height: 1 },
+    marginHorizontal: 16, backgroundColor: theme.card, borderRadius: 16,
+    borderWidth: 1, borderColor: theme.slate100, overflow: 'hidden',
+    shadowColor: theme.slate900, shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
   chartCardHeader: {
-    backgroundColor: Colors.primaryLight, paddingHorizontal: 16, paddingVertical: 10,
+    backgroundColor: theme.primaryLight, paddingHorizontal: 16, paddingVertical: 10,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    borderBottomWidth: 1, borderBottomColor: Colors.primaryBorder,
+    borderBottomWidth: 1, borderBottomColor: theme.primaryBorder,
   },
-  chartCardTitle: { fontSize: 13, fontWeight: '600', color: Colors.primary },
+  chartCardTitle: { fontSize: 13, fontWeight: '600', color: theme.primary },
   chartCardBody: { padding: 16, alignItems: 'center' },
   donutCenter: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',
   },
-  donutValue: { fontSize: 24, fontWeight: 'bold', color: Colors.slate900 },
-  donutLabel: { fontSize: 10, color: Colors.slate400, textTransform: 'uppercase', letterSpacing: 0.5 },
+  donutValue: { fontSize: 24, fontWeight: 'bold', color: theme.slate900 },
+  donutLabel: { fontSize: 10, color: theme.slate400, textTransform: 'uppercase', letterSpacing: 0.5 },
   legendGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 16, justifyContent: 'center' },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: '45%' },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
-  legendText: { fontSize: 11, color: Colors.slate700 },
+  legendText: { fontSize: 11, color: theme.slate700 },
   barLabelsRow: { flexDirection: 'row', marginTop: 4 },
-  barValue: { fontSize: 10, fontWeight: 'bold', color: Colors.slate700, textAlign: 'center' },
-  barLabel: { fontSize: 10, color: Colors.slate400, textAlign: 'center' },
+  barValue: { fontSize: 10, fontWeight: 'bold', color: theme.slate700, textAlign: 'center' },
+  barLabel: { fontSize: 10, color: theme.slate400, textAlign: 'center' },
   lineLabelsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-  lineLabel: { fontSize: 10, color: Colors.slate400 },
+  lineLabel: { fontSize: 10, color: theme.slate400 },
   hBarsContainer: { width: '100%', gap: 16 },
   hBarRow: { gap: 6 },
   hBarHeader: { flexDirection: 'row', justifyContent: 'space-between' },
-  hBarLabel: { fontSize: 11, fontWeight: '500', color: Colors.slate700 },
-  hBarValue: { fontSize: 11, fontWeight: '500', color: Colors.slate700 },
-  hBarTrack: { height: 8, backgroundColor: Colors.slate100, borderRadius: 999, overflow: 'hidden' },
-  hBarFill: { height: '100%', backgroundColor: Colors.primary, borderRadius: 999 },
+  hBarLabel: { fontSize: 11, fontWeight: '500', color: theme.slate700 },
+  hBarValue: { fontSize: 11, fontWeight: '500', color: theme.slate700 },
+  hBarTrack: { height: 8, backgroundColor: theme.slate100, borderRadius: 999, overflow: 'hidden' },
+  hBarFill: { height: '100%', backgroundColor: theme.primary, borderRadius: 999 },
   recentList: {},
   recentRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 12,
   },
-  recentDivider: { height: 1, backgroundColor: Colors.slate100, marginHorizontal: 16 },
+  recentDivider: { height: 1, backgroundColor: theme.slate100, marginHorizontal: 16 },
   recentLeft: { gap: 4 },
   recentBadge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
   recentBadgeText: { fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 0.3 },
-  recentLocation: { fontSize: 12, fontWeight: '500', color: Colors.slate700 },
-  recentTime: { fontSize: 10, color: Colors.slate400 },
-  usersBtn: {
-    marginHorizontal: 16, backgroundColor: Colors.slate800, borderRadius: 16,
-    paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    shadowColor: Colors.slate900, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2, shadowRadius: 8, elevation: 4,
-  },
-  usersBtnText: { fontSize: 15, fontWeight: 'bold', color: Colors.white },
+  recentLocation: { fontSize: 12, fontWeight: '500', color: theme.slate700 },
+  recentTime: { fontSize: 10, color: theme.slate400 },
   pdfBtn: {
-    marginHorizontal: 16, backgroundColor: Colors.primary, borderRadius: 16,
+    marginHorizontal: 16, backgroundColor: theme.primary, borderRadius: 16,
     paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 },
+    shadowColor: theme.primary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2, shadowRadius: 8, elevation: 4,
   },
-  pdfBtnText: { fontSize: 15, fontWeight: 'bold', color: Colors.white },
-  logoutBtn: {
-    marginHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    paddingVertical: 16, borderRadius: 16,
-    backgroundColor: Colors.dangerLight, borderWidth: 1, borderColor: '#C6282820',
-  },
-  logoutText: { fontSize: 15, fontWeight: 'bold', color: Colors.danger },
+  pdfBtnText: { fontSize: 15, fontWeight: 'bold', color: theme.white },
 });

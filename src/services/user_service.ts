@@ -7,6 +7,7 @@ export interface UserProfile {
   codigo_estudiantil?: string;
   rol_id?: number | string;
   nombre_rol?: string;
+  es_activo?: boolean;
   creado_en?: string;
 }
 
@@ -53,6 +54,11 @@ export const userService = {
   changeUserRole: async (userId: number, roleId: number) => {
     // Método administrativo: Cambiar el rol.
     const response = await api.put(`/usuarios/${userId}`, { rol_id: roleId });
+    return response.data;
+  },
+
+  updateUser: async (userId: number, data: any) => {
+    const response = await api.put(`/usuarios/${userId}`, data);
     return response.data;
   }
 };
