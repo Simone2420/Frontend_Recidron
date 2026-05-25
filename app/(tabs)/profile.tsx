@@ -118,9 +118,17 @@ export default function ProfileScreen() {
   const passwordMismatch = editConfirmPassword.length > 0 && editPassword !== editConfirmPassword;
   const passwordMatch    = editConfirmPassword.length > 0 && editPassword === editConfirmPassword && isPasswordStrong;
 
-  const handleLogout = () => {
-    logout();
-    router.replace('/(auth)/login');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      
+      // Esperar un tick para que el estado global se actualice y limpie
+      setTimeout(() => {
+        router.replace('/(auth)/login');
+      }, 100);
+    } catch (e) {
+      console.log('Error in logout:', e);
+    }
   };
 
   return (

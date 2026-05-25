@@ -17,7 +17,9 @@ export default function SettingsScreen() {
   const handleLogout = async () => {
     try {
       await logout();
-      router.replace('/(auth)/login');
+      setTimeout(() => {
+        router.replace('/(auth)/login');
+      }, 100);
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }
