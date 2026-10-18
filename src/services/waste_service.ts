@@ -9,15 +9,33 @@ export interface WasteCatalogItem {
 }
 
 export interface WasteReport {
-  id?: number;
+  id?: number | string;
   descripcion?: string;
-  usuario_id: number;
-  tipo_residuo_id: number;
-  material_id: number;
-  zona_id: number;
-  tamano_id: number;
+  usuario_id?: number;
+  tipo_residuo_id?: number;
+  material_id?: number;
+  zona_id?: number;
+  tamano_id?: number;
   fecha_reporte?: string;
   es_activo?: number;
+  // Propiedades opcionales para vistas/mocks
+  type?: string;
+  location?: string;
+  material?: string;
+  dateStr?: string;
+  // Campos de coordenadas GPS
+  latitud?: number;
+  longitud?: number;
+  altitud?: number;
+  precision?: number;
+  geolocalizacion?: {
+    id?: number;
+    latitud: number;
+    longitud: number;
+    altitud?: number | null;
+    precision?: number | null;
+    reporte_id?: number;
+  } | null;
   // Campos de imagen devueltos por el backend
   foto_url?: string; 
   foto?: {
@@ -52,14 +70,19 @@ export const wasteService = {
   // --- Métodos de Reportes ---
   createReport: async (reportData: WasteReport) => {
     // Validamos que el payload coincida con ReporteCreate del backend
-    const payload = {
+    const payload: Record<string, any> = {
       descripcion: reportData.descripcion,
       usuario_id: reportData.usuario_id,
       tipo_residuo_id: reportData.tipo_residuo_id,
       material_id: reportData.material_id,
       zona_id: reportData.zona_id,
-      tamano_id: reportData.tamano_id
+      tamano_id: reportData.tamano_id,
     };
+
+    if (reportData.latitud !== undefined && reportData.latitud !== null) payload.latitud = reportData.latitud;
+    if (reportData.longitud !== undefined && reportData.longitud !== null) payload.longitud = reportData.longitud;
+    if (reportData.altitud !== undefined && reportData.altitud !== null) payload.altitud = reportData.altitud;
+    if (reportData.precision !== undefined && reportData.precision !== null) payload.precision = reportData.precision;
     
     const response = await api.post('/reportes/', payload);
     return response.data;

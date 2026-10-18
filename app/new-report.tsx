@@ -4,12 +4,13 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import React, { useState, useEffect, useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { Button, InputField } from '../src/components/ui';
 import { useTheme } from '../src/styles/theme';
 import { WasteColors } from '../src/styles/colors';
 import { wasteService, WasteCatalogItem } from '../src/services/waste_service';
+import { locationService, GeoCoordinates } from '../src/services/location_service';
 import { useAuth } from '../src/store/authStore';
 import Toast from 'react-native-toast-message';
 
@@ -37,9 +38,21 @@ export default function NewReportScreen() {
   const [photoTaken, setPhotoTaken] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
 
+  // GPS State
+  const [coords, setCoords] = useState<GeoCoordinates | null>(null);
+  const [gpsStatus, setGpsStatus] = useState<'idle' | 'capturing' | 'ready' | 'denied' | 'error'>('idle');
+
   useEffect(() => {
     loadCatalogs();
+    captureLocation();
   }, []);
+
+  const captureLocation = async () => {
+    setGpsStatus('capturing');
+    const result = await locationService.getCurrentCoordinates();
+    setCoords(result.coords);
+    setGpsStatus(result.status);
+  };
 
   const loadCatalogs = async () => {
     setIsLoading(true);
@@ -126,6 +139,10 @@ export default function NewReportScreen() {
         zona_id: selectedZone,
         tamano_id: selectedSize,
         descripcion: finalDescription,
+        latitud: coords?.latitud,
+        longitud: coords?.longitud,
+        altitud: coords?.altitud ?? undefined,
+        precision: coords?.precision ?? undefined,
       });
 
       if (imageUri && newReport?.id) {
@@ -231,6 +248,45 @@ export default function NewReportScreen() {
           onChangeText={setDescription}
           multiline
         />
+      </View>
+
+      {/* Tarjeta de Estado GPS */}
+      <View style={[
+        styles.gpsCard,
+        gpsStatus === 'ready' ? styles.gpsCardSuccess : (gpsStatus === 'denied' || gpsStatus === 'error' ? styles.gpsCardWarning : null)
+      ]}>
+        <View style={styles.gpsIconWrap}>
+          {gpsStatus === 'capturing' ? (
+            <ActivityIndicator size="small" color={theme.primary} />
+          ) : (
+            <MaterialIcons
+              name={gpsStatus === 'ready' ? "gps-fixed" : (gpsStatus === 'denied' ? "location-disabled" : "location-searching")}
+              size={20}
+              color={gpsStatus === 'ready' ? '#059669' : (gpsStatus === 'denied' ? '#D97706' : theme.primary)}
+            />
+          )}
+        </View>
+        <View style={styles.gpsInfo}>
+          <Text style={styles.gpsTitle}>
+            {gpsStatus === 'ready'
+              ? 'GPS Fijado'
+              : gpsStatus === 'capturing'
+              ? 'Obteniendo GPS...'
+              : 'GPS No Disponible'}
+          </Text>
+          <Text style={styles.gpsSubtitle}>
+            {gpsStatus === 'ready' && coords
+              ? `${coords.latitud.toFixed(6)}, ${coords.longitud.toFixed(6)} (±${coords.precision ? coords.precision.toFixed(0) : '?'}m)`
+              : gpsStatus === 'capturing'
+              ? 'Solicitando coordenadas al dispositivo...'
+              : 'Sin coordenadas (se registrará como No especificada).'}
+          </Text>
+        </View>
+        {(gpsStatus === 'denied' || gpsStatus === 'error') && (
+          <TouchableOpacity onPress={captureLocation} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <MaterialIcons name="refresh" size={20} color={theme.primary} />
+          </TouchableOpacity>
+        )}
       </View>
     </Animated.View>
   );
@@ -388,4 +444,45 @@ const createStyles = (theme: any) => StyleSheet.create({
   categoryCardText: { fontSize: 13, color: theme.slate700, flex: 1 },
   categoryColorDot: { width: 10, height: 10, borderRadius: 5 },
   otherInputContainer: { marginTop: 12, paddingBottom: 8 },
+  // GPS Status Card Styles
+  gpsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.card,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: theme.slate200,
+    marginTop: 16,
+    gap: 12,
+  },
+  gpsCardSuccess: {
+    borderColor: '#10B981',
+    backgroundColor: '#ECFDF5',
+  },
+  gpsCardWarning: {
+    borderColor: '#F59E0B',
+    backgroundColor: '#FFFBEB',
+  },
+  gpsIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.slate100,
+  },
+  gpsInfo: {
+    flex: 1,
+  },
+  gpsTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: theme.slate900,
+  },
+  gpsSubtitle: {
+    fontSize: 12,
+    color: theme.slate600,
+    marginTop: 2,
+  },
 });
