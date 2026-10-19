@@ -44,7 +44,6 @@ export default function NewReportScreen() {
 
   useEffect(() => {
     loadCatalogs();
-    captureLocation();
   }, []);
 
   const captureLocation = async () => {
@@ -52,6 +51,30 @@ export default function NewReportScreen() {
     const result = await locationService.getCurrentCoordinates();
     setCoords(result.coords);
     setGpsStatus(result.status);
+    if (result.status === 'ready' && result.coords) {
+      Toast.show({
+        type: 'success',
+        text1: 'Coordenadas capturadas',
+        text2: `Margen de error: ±${result.coords.precision ? result.coords.precision.toFixed(1) : 0} m | Altitud: ${result.coords.altitud ? result.coords.altitud.toFixed(1) + ' m' : 'N/A'}`,
+      });
+    } else if (result.status === 'denied') {
+      Toast.show({
+        type: 'info',
+        text1: 'Permiso de ubicación denegado',
+        text2: 'Puedes continuar sin GPS; el reporte quedará como No especificada.',
+      });
+    } else if (result.status === 'error') {
+      Toast.show({
+        type: 'error',
+        text1: 'Error de GPS',
+        text2: result.errorMessage || 'No se pudo obtener la posición exacta.',
+      });
+    }
+  };
+
+  const handleClearCoords = () => {
+    setCoords(null);
+    setGpsStatus('idle');
   };
 
   const loadCatalogs = async () => {
@@ -250,42 +273,114 @@ export default function NewReportScreen() {
         />
       </View>
 
-      {/* Tarjeta de Estado GPS */}
-      <View style={[
-        styles.gpsCard,
-        gpsStatus === 'ready' ? styles.gpsCardSuccess : (gpsStatus === 'denied' || gpsStatus === 'error' ? styles.gpsCardWarning : null)
-      ]}>
-        <View style={styles.gpsIconWrap}>
-          {gpsStatus === 'capturing' ? (
+      {/* Sección de Coordenadas GPS */}
+      <View style={styles.gpsSectionContainer}>
+        <Text style={styles.inputLabelLabel}>Coordenadas GPS (Opcional)</Text>
+        
+        {gpsStatus === 'idle' && (
+          <View style={styles.gpsIdleCard}>
+            <View style={styles.gpsIdleHeader}>
+              <View style={styles.gpsIconWrap}>
+                <MaterialIcons name="my-location" size={22} color={theme.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.gpsTitle}>Ubicación GPS del Campus</Text>
+                <Text style={styles.gpsSubtitle}>
+                  Captura el punto exacto y altitud del residuo con alta precisión.
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.gpsTriggerBtn}
+              onPress={captureLocation}
+              activeOpacity={0.8}
+            >
+              <MaterialIcons name="gps-fixed" size={18} color={theme.white} />
+              <Text style={styles.gpsTriggerBtnText}>Suministrar Coordenadas GPS</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {gpsStatus === 'capturing' && (
+          <View style={[styles.gpsCard, styles.gpsCardCapturing]}>
             <ActivityIndicator size="small" color={theme.primary} />
-          ) : (
-            <MaterialIcons
-              name={gpsStatus === 'ready' ? "gps-fixed" : (gpsStatus === 'denied' ? "location-disabled" : "location-searching")}
-              size={20}
-              color={gpsStatus === 'ready' ? '#059669' : (gpsStatus === 'denied' ? '#D97706' : theme.primary)}
-            />
-          )}
-        </View>
-        <View style={styles.gpsInfo}>
-          <Text style={styles.gpsTitle}>
-            {gpsStatus === 'ready'
-              ? 'GPS Fijado'
-              : gpsStatus === 'capturing'
-              ? 'Obteniendo GPS...'
-              : 'GPS No Disponible'}
-          </Text>
-          <Text style={styles.gpsSubtitle}>
-            {gpsStatus === 'ready' && coords
-              ? `${coords.latitud.toFixed(6)}, ${coords.longitud.toFixed(6)} (±${coords.precision ? coords.precision.toFixed(0) : '?'}m)`
-              : gpsStatus === 'capturing'
-              ? 'Solicitando coordenadas al dispositivo...'
-              : 'Sin coordenadas (se registrará como No especificada).'}
-          </Text>
-        </View>
+            <View style={styles.gpsInfo}>
+              <Text style={styles.gpsTitle}>Obteniendo coordenadas exactas...</Text>
+              <Text style={styles.gpsSubtitle}>
+                Calibrando sensores GNSS/GPS para precisión de campus universitario.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {gpsStatus === 'ready' && coords && (
+          <View style={[styles.gpsCard, styles.gpsCardSuccess]}>
+            <View style={styles.gpsHeaderSuccess}>
+              <View style={styles.gpsSuccessBadge}>
+                <MaterialIcons name="check-circle" size={18} color="#059669" />
+                <Text style={styles.gpsSuccessBadgeText}>GPS Fijado (Alta Precisión)</Text>
+              </View>
+              <TouchableOpacity onPress={handleClearCoords} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <MaterialIcons name="close" size={18} color={theme.slate500} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.gpsValuesGrid}>
+              <View style={styles.gpsValueCol}>
+                <Text style={styles.gpsValueLabel}>COORDENADAS</Text>
+                <Text style={styles.gpsValueMono}>{coords.latitud.toFixed(8)}, {coords.longitud.toFixed(8)}</Text>
+              </View>
+              <View style={styles.gpsValueRow}>
+                <View style={styles.gpsValueColHalf}>
+                  <Text style={styles.gpsValueLabel}>MARGEN DE ERROR</Text>
+                  <Text style={styles.gpsValueText}>±{coords.precision != null ? coords.precision.toFixed(2) : '0.00'} m</Text>
+                </View>
+                <View style={styles.gpsValueColHalf}>
+                  <Text style={styles.gpsValueLabel}>ALTITUD EXACTA</Text>
+                  <Text style={styles.gpsValueText}>{coords.altitud != null ? `${coords.altitud.toFixed(2)} msnm` : 'No disponible'}</Text>
+                </View>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.gpsRefreshBtn}
+              onPress={captureLocation}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons name="refresh" size={16} color={theme.primary} />
+              <Text style={styles.gpsRefreshBtnText}>Actualizar Coordenadas</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {(gpsStatus === 'denied' || gpsStatus === 'error') && (
-          <TouchableOpacity onPress={captureLocation} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <MaterialIcons name="refresh" size={20} color={theme.primary} />
-          </TouchableOpacity>
+          <View style={[styles.gpsCard, styles.gpsCardWarning]}>
+            <View style={styles.gpsIconWrap}>
+              <MaterialIcons
+                name={gpsStatus === 'denied' ? "location-disabled" : "error-outline"}
+                size={22}
+                color="#D97706"
+              />
+            </View>
+            <View style={styles.gpsInfo}>
+              <Text style={styles.gpsTitle}>
+                {gpsStatus === 'denied' ? 'Permiso de GPS Denegado' : 'Error al Obtener GPS'}
+              </Text>
+              <Text style={styles.gpsSubtitle}>
+                {gpsStatus === 'denied'
+                  ? 'Sin acceso al sensor. El reporte se registrará como "No especificada".'
+                  : 'No se pudo leer la señal GPS. Puedes reintentar o continuar sin ella.'}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.gpsRetryBtn}
+              onPress={captureLocation}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons name="refresh" size={18} color="#D97706" />
+              <Text style={styles.gpsRetryBtnText}>Reintentar</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
     </Animated.View>
@@ -445,24 +540,142 @@ const createStyles = (theme: any) => StyleSheet.create({
   categoryColorDot: { width: 10, height: 10, borderRadius: 5 },
   otherInputContainer: { marginTop: 12, paddingBottom: 8 },
   // GPS Status Card Styles
-  gpsCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  gpsSectionContainer: {
+    marginTop: 24,
+  },
+  gpsIdleCard: {
     backgroundColor: theme.card,
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 14,
+    padding: 16,
     borderWidth: 1,
     borderColor: theme.slate200,
-    marginTop: 16,
+    gap: 14,
+  },
+  gpsIdleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
+  },
+  gpsTriggerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.primary,
+    borderRadius: 10,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  gpsTriggerBtnText: {
+    color: theme.white,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  gpsCard: {
+    backgroundColor: theme.card,
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: theme.slate200,
+  },
+  gpsCardCapturing: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderColor: theme.primary,
+    backgroundColor: theme.primaryLight,
   },
   gpsCardSuccess: {
     borderColor: '#10B981',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#F0FDF4',
+    gap: 12,
   },
   gpsCardWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderColor: '#F59E0B',
     backgroundColor: '#FFFBEB',
+    gap: 12,
+  },
+  gpsHeaderSuccess: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  gpsSuccessBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  gpsSuccessBadgeText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  gpsValuesGrid: {
+    backgroundColor: theme.white,
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 8,
+  },
+  gpsValueCol: {
+    borderBottomWidth: 1,
+    borderBottomColor: theme.slate100,
+    paddingBottom: 6,
+  },
+  gpsValueRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  gpsValueColHalf: {
+    flex: 1,
+  },
+  gpsValueLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: theme.slate500,
+    letterSpacing: 0.5,
+  },
+  gpsValueMono: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.slate900,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    marginTop: 2,
+  },
+  gpsValueText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.slate800,
+    marginTop: 2,
+  },
+  gpsRefreshBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 6,
+  },
+  gpsRefreshBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.primary,
+  },
+  gpsRetryBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#D97706',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  gpsRetryBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#D97706',
   },
   gpsIconWrap: {
     width: 38,

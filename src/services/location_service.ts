@@ -34,7 +34,7 @@ export const locationService = {
    * sin generar fallas críticas.
    */
   getCurrentCoordinates: async (
-    accuracy: Location.Accuracy = Location.Accuracy.Balanced
+    accuracy: Location.Accuracy = Location.Accuracy.Highest
   ): Promise<LocationResult> => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -42,18 +42,21 @@ export const locationService = {
         return { coords: null, status: 'denied', errorMessage: 'Permiso de ubicación denegado' };
       }
 
-      const location = await Location.getCurrentPositionAsync({ accuracy });
+      const location = await Location.getCurrentPositionAsync({
+        accuracy,
+      });
+
       return {
         coords: {
-          latitud: location.coords.latitude,
-          longitud: location.coords.longitude,
-          altitud: location.coords.altitude,
-          precision: location.coords.accuracy,
+          latitud: Number(location.coords.latitude.toFixed(8)),
+          longitud: Number(location.coords.longitude.toFixed(8)),
+          altitud: location.coords.altitude != null ? Number(location.coords.altitude.toFixed(2)) : null,
+          precision: location.coords.accuracy != null ? Number(location.coords.accuracy.toFixed(2)) : null,
         },
         status: 'ready',
       };
     } catch (error: any) {
-      console.warn('Error al obtener coordenadas GPS:', error);
+      console.warn('Error al obtener coordenadas GPS de alta precisión:', error);
       return {
         coords: null,
         status: 'error',
