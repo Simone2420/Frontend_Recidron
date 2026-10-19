@@ -3,12 +3,13 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState, useMemo } from 'react';
 import { userService } from '../src/services/user_service';
-import { WasteReport, wasteService } from '../src/services/waste_service';
+import { WasteReport, wasteService, Subzone } from '../src/services/waste_service';
+import { locationService } from '../src/services/location_service';
 
 import {
   ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../src/styles/theme';
 
 const formatDate = (dateStr?: string): string => {
@@ -27,6 +28,18 @@ const formatDate = (dateStr?: string): string => {
   }
 };
 
+const getSubzoneIcon = (tipo?: string): any => {
+  if (!tipo) return 'meeting-room';
+  const t = tipo.toLowerCase();
+  if (t.includes('aula')) return 'meeting-room';
+  if (t.includes('oficina') || t.includes('coordinación') || t.includes('rectoría') || t.includes('admisiones')) return 'business';
+  if (t.includes('baño') || t.includes('sanitario')) return 'wc';
+  if (t.includes('laboratorio')) return 'biotech';
+  if (t.includes('área común') || t.includes('comun') || t.includes('ajedrez') || t.includes('hall') || t.includes('ala') || t.includes('libre')) return 'deck';
+  if (t.includes('servicio') || t.includes('papelería')) return 'store';
+  return 'place';
+};
+
 export default function ReportDetailScreen() {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -36,6 +49,7 @@ export default function ReportDetailScreen() {
   const [type, setType] = useState<string | null>(null);
   const [material, setMaterial] = useState<string | null>(null);
   const [zone, setZone] = useState<string | null>(null);
+  const [subzone, setSubzone] = useState<Subzone | null>(null);
   const [size, setSize] = useState<string | null>(null);
   const [reporter, setReporter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +71,16 @@ export default function ReportDetailScreen() {
         setMaterial(materialData.nombre_material);
         setZone(zoneData.nombre_zona);
         setSize(sizeData.nombre_tamano);
+        if (reportData.subzona) {
+          setSubzone(reportData.subzona);
+        } else if (reportData.subzona_id) {
+          try {
+            const subData = await wasteService.getSubzoneById(reportData.subzona_id);
+            setSubzone(subData);
+          } catch (e) {
+            console.error("Error al obtener subzona:", e);
+          }
+        }
         try {
           const userData = await userService.getUserById(reportData.usuario_id);
           setReporter(userData.nombre || `Usuario #${reportData.usuario_id}`);
@@ -70,7 +94,21 @@ export default function ReportDetailScreen() {
       }
     };
     fetchReport();
-  }, [id]); 
+  }, [id]);
+
+  const { coordsText, precisionText, altitudText } = useMemo(() => {
+    const lat = report?.geolocalizacion?.latitud ?? report?.latitud;
+    const lng = report?.geolocalizacion?.longitud ?? report?.longitud;
+    const precision = report?.geolocalizacion?.precision ?? report?.precision;
+    const altitud = report?.geolocalizacion?.altitud ?? report?.altitud;
+
+    return {
+      coordsText: locationService.formatCoordinates(lat, lng),
+      precisionText: locationService.formatPrecision(precision),
+      altitudText: locationService.formatAltitude(altitud),
+    };
+  }, [report]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Header */}
@@ -176,29 +214,57 @@ export default function ReportDetailScreen() {
             <View style={styles.card}>
               <View style={styles.locationHeader}>
                 <View style={styles.locationIconWrapper}>
-                  <MaterialIcons name="place" size={22} color={theme.primary} />
+                  <MaterialIcons name="apartment" size={22} color={theme.primary} />
                 </View>
-                <View>
+                <View style={{ flex: 1 }}>
                   <Text style={styles.locationName}>Zona: {zone}</Text>
-                  <Text style={styles.locationSub}>Localización registrada</Text>
+                  <Text style={styles.locationSub}>Edificio o Sector Principal</Text>
                 </View>
               </View>
+
+              {subzone && (
+                <>
+                  <View style={styles.cardDivider} />
+                  <View style={styles.locationHeader}>
+                    <View style={[styles.locationIconWrapper, { backgroundColor: theme.primaryLight }]}>
+                      <MaterialIcons name={getSubzoneIcon(subzone.tipo_subzona_nombre)} size={22} color={theme.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.locationName}>Punto: {subzone.nombre_subzona}</Text>
+                      <View style={{ flexDirection: 'row', gap: 6, marginTop: 4, alignItems: 'center' }}>
+                        {subzone.tipo_subzona_nombre && (
+                          <View style={styles.subzoneBadge}>
+                            <Text style={styles.subzoneBadgeText}>{subzone.tipo_subzona_nombre}</Text>
+                          </View>
+                        )}
+                        {subzone.piso && (
+                          <View style={[styles.subzoneBadge, styles.subzoneBadgeFloor]}>
+                            <Text style={[styles.subzoneBadgeText, styles.subzoneBadgeFloorText]}>
+                              Piso {subzone.piso}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  </View>
+                </>
+              )}
               <View style={styles.cardDivider} />
               <View style={styles.coordsGrid}>
                 <View style={styles.coordCell}>
                   <Text style={styles.classLabel}>COORDENADAS</Text>
-                  <Text style={styles.cardValueMono}>No especificada</Text>
+                  <Text style={styles.cardValueMono}>{coordsText}</Text>
                 </View>
                 <View style={styles.coordCell}>
                   <Text style={styles.classLabel}>PRECISIÓN</Text>
                   <View style={styles.classMaterialRow}>
                     <MaterialIcons name="gps-fixed" size={16} color={theme.primary} />
-                    <Text style={styles.cardValue}>No especificada</Text>
+                    <Text style={styles.cardValue}>{precisionText}</Text>
                   </View>
                 </View>
                 <View style={styles.coordCell}>
                   <Text style={styles.classLabel}>ALTITUD</Text>
-                  <Text style={styles.cardValue}>No especificada</Text>
+                  <Text style={styles.cardValue}>{altitudText}</Text>
                 </View>
               </View>
             </View>
@@ -437,6 +503,25 @@ const createStyles = (theme: any) => StyleSheet.create({
     color: theme.slate700,
     fontStyle: 'italic',
     lineHeight: 22,
+  },
+  subzoneBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: theme.slate100,
+  },
+  subzoneBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: theme.slate700,
+  },
+  subzoneBadgeFloor: {
+    backgroundColor: '#EEF2FF',
+  },
+  subzoneBadgeFloorText: {
+    color: '#4F46E5',
+    fontWeight: '600',
+    fontSize: 11,
   },
   footer: {
     alignItems: 'center',

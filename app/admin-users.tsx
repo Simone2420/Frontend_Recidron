@@ -141,6 +141,16 @@ export default function AdminUsersScreen() {
   });
 
   const handleToggleActive = async (user: UserProfile) => {
+    // Evitar que el usuario logueado desactive su propia cuenta
+    if (currentUser?.id != null && (user.id === currentUser.id || String(user.id) === String(currentUser.id))) {
+      Toast.show({
+        type: 'error',
+        text1: 'Acción no permitida',
+        text2: 'No puedes desactivar tu propia cuenta.',
+      });
+      return;
+    }
+
     Alert.alert(
       "Confirmar Acción",
       `¿Deseas ${user.es_activo ? 'desactivar' : 'activar'} la cuenta de ${user.nombre || user.email}?`,
@@ -240,6 +250,7 @@ export default function AdminUsersScreen() {
               const isAdmin = item.nombre_rol === 'admin';
               const displayName = (item as any).full_name || item.nombre || 'Sin Nombre';
               const isTargetSuperAdmin = item.email === 'admin@recidron.com';
+              const isCurrentLoggedUser = currentUser?.id != null && (item.id === currentUser.id || String(item.id) === String(currentUser.id));
               const canEdit = isSuperAdmin || !isTargetSuperAdmin;
               
               return (
@@ -251,12 +262,17 @@ export default function AdminUsersScreen() {
                     <View style={styles.userTextCol}>
                       <Text style={styles.userName}>{displayName}</Text>
                       <Text style={styles.userEmail}>{item.email}</Text>
-                      <View style={{flexDirection: 'row', gap: 6}}>
+                      <View style={{flexDirection: 'row', gap: 6, flexWrap: 'wrap'}}>
                         <View style={[styles.roleBadge, isAdmin ? styles.roleBadgeAdmin : styles.roleBadgeAutor]}>
                           <Text style={[styles.roleText, isAdmin && {color: theme.white}]}>
                             {isAdmin ? 'ADMINISTRADOR' : 'ESTUDIANTE / AUTOR'}
                           </Text>
                         </View>
+                        {isCurrentLoggedUser && (
+                          <View style={[styles.roleBadge, {backgroundColor: theme.primaryLight || '#e0f2fe'}]}>
+                            <Text style={[styles.roleText, {color: theme.primary, fontWeight: '700'}]}>TÚ</Text>
+                          </View>
+                        )}
                         {item.es_activo === false && (
                           <View style={[styles.roleBadge, {backgroundColor: theme.dangerLight}]}>
                             <Text style={[styles.roleText, {color: theme.danger}]}>INACTIVO</Text>
@@ -297,7 +313,7 @@ export default function AdminUsersScreen() {
                       </TouchableOpacity>
                     )}
 
-                    {canEdit && !isTargetSuperAdmin && (
+                    {canEdit && !isTargetSuperAdmin && !isCurrentLoggedUser && (
                       <TouchableOpacity 
                         style={[styles.actionBtn, item.es_activo === false ? styles.btnAscender : styles.btnRevocar]}
                         onPress={() => handleToggleActive(item)}
