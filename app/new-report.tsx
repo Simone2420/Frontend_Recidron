@@ -3,13 +3,24 @@ import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import React, { useState, useEffect, useMemo } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ActivityIndicator,
+  Modal,
+  TextInput,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { Button, InputField } from '../src/components/ui';
 import { useTheme } from '../src/styles/theme';
 import { WasteColors } from '../src/styles/colors';
-import { wasteService, WasteCatalogItem } from '../src/services/waste_service';
+import { wasteService, WasteCatalogItem, Subzone } from '../src/services/waste_service';
 import { locationService, GeoCoordinates } from '../src/services/location_service';
 import { useAuth } from '../src/store/authStore';
 import Toast from 'react-native-toast-message';
@@ -37,6 +48,15 @@ export default function NewReportScreen() {
   const [description, setDescription] = useState('');
   const [photoTaken, setPhotoTaken] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
+
+  // Subzones State
+  const [availableSubzones, setAvailableSubzones] = useState<Subzone[]>([]);
+  const [selectedSubzone, setSelectedSubzone] = useState<number | null>(null);
+  const [isLoadingSubzones, setIsLoadingSubzones] = useState(false);
+  const [isSubzoneModalVisible, setIsSubzoneModalVisible] = useState(false);
+  const [subzoneSearch, setSubzoneSearch] = useState('');
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>('all');
+  const [selectedFloorFilter, setSelectedFloorFilter] = useState<string>('all');
 
   // GPS State
   const [coords, setCoords] = useState<GeoCoordinates | null>(null);
@@ -75,6 +95,71 @@ export default function NewReportScreen() {
   const handleClearCoords = () => {
     setCoords(null);
     setGpsStatus('idle');
+  };
+
+  const handleSelectZone = async (zoneId: number) => {
+    setSelectedZone(zoneId);
+    setSelectedSubzone(null);
+    setIsLoadingSubzones(true);
+    try {
+      const list = await wasteService.getSubzones(zoneId);
+      setAvailableSubzones(list);
+    } catch (error) {
+      console.error('Error loading subzones:', error);
+      setAvailableSubzones([]);
+    } finally {
+      setIsLoadingSubzones(false);
+    }
+  };
+
+  const selectedSubzoneObj = useMemo(() => {
+    return availableSubzones.find((s) => s.id === selectedSubzone);
+  }, [availableSubzones, selectedSubzone]);
+
+  const selectedZoneName = useMemo(() => {
+    return zones.find((z) => z.id === selectedZone)?.nombre_zona || '';
+  }, [zones, selectedZone]);
+
+  const availableTypes = useMemo(() => {
+    const set = new Set<string>();
+    availableSubzones.forEach((s) => {
+      if (s.tipo_subzona_nombre) set.add(s.tipo_subzona_nombre);
+    });
+    return Array.from(set);
+  }, [availableSubzones]);
+
+  const availableFloors = useMemo(() => {
+    const set = new Set<string>();
+    availableSubzones.forEach((s) => {
+      if (s.piso) set.add(s.piso);
+    });
+    return Array.from(set).sort();
+  }, [availableSubzones]);
+
+  const filteredSubzones = useMemo(() => {
+    return availableSubzones.filter((item) => {
+      const matchType = selectedTypeFilter === 'all' || item.tipo_subzona_nombre === selectedTypeFilter;
+      const matchFloor = selectedFloorFilter === 'all' || item.piso === selectedFloorFilter;
+      const query = subzoneSearch.trim().toLowerCase();
+      const matchSearch =
+        query === '' ||
+        item.nombre_subzona.toLowerCase().includes(query) ||
+        (item.tipo_subzona_nombre && item.tipo_subzona_nombre.toLowerCase().includes(query)) ||
+        (item.piso && item.piso.toLowerCase().includes(query));
+      return matchType && matchFloor && matchSearch;
+    });
+  }, [availableSubzones, selectedTypeFilter, selectedFloorFilter, subzoneSearch]);
+
+  const getSubzoneIcon = (tipo?: string): any => {
+    if (!tipo) return 'place';
+    const t = tipo.toLowerCase();
+    if (t.includes('aula')) return 'meeting-room';
+    if (t.includes('oficina') || t.includes('coordinación') || t.includes('rectoría') || t.includes('admisiones')) return 'business';
+    if (t.includes('baño') || t.includes('sanitario')) return 'wc';
+    if (t.includes('laboratorio')) return 'biotech';
+    if (t.includes('área común') || t.includes('comun') || t.includes('ajedrez') || t.includes('hall') || t.includes('ala') || t.includes('libre')) return 'deck';
+    if (t.includes('servicio') || t.includes('papelería')) return 'store';
+    return 'place';
   };
 
   const loadCatalogs = async () => {
@@ -160,6 +245,7 @@ export default function NewReportScreen() {
         tipo_residuo_id: selectedType,
         material_id: selectedMaterial,
         zona_id: selectedZone,
+        subzona_id: selectedSubzone ?? undefined,
         tamano_id: selectedSize,
         descripcion: finalDescription,
         latitud: coords?.latitud,
@@ -260,7 +346,94 @@ export default function NewReportScreen() {
       <Text style={styles.stepSubtitle}>Indica dónde se encuentra y añade una descripción.</Text>
 
       <Text style={styles.inputLabelLabel}>Zona del Campus</Text>
-      {renderCatalogList(zones, selectedZone, setSelectedZone, "zonas")}
+      {renderCatalogList(zones, selectedZone, handleSelectZone, "zonas")}
+
+      {/* Subzona / Punto Específico */}
+      <View style={styles.subzoneSectionContainer}>
+        <View style={styles.subzoneSectionHeader}>
+          <Text style={styles.inputLabelLabel}>Subzona / Punto Específico</Text>
+          <Text style={styles.subzoneOptionalBadge}>Opcional</Text>
+        </View>
+
+        {!selectedZone ? (
+          <View style={styles.subzoneEmptyHint}>
+            <MaterialIcons name="info-outline" size={20} color={theme.slate400} />
+            <Text style={styles.subzoneEmptyHintText}>
+              Selecciona primero una zona del campus para ver las aulas, oficinas y puntos específicos disponibles.
+            </Text>
+          </View>
+        ) : isLoadingSubzones ? (
+          <View style={styles.subzoneLoadingCard}>
+            <ActivityIndicator size="small" color={theme.primary} />
+            <Text style={styles.subzoneLoadingText}>Cargando subzonas de {selectedZoneName}...</Text>
+          </View>
+        ) : availableSubzones.length === 0 ? (
+          <View style={styles.subzoneEmptyHint}>
+            <MaterialIcons name="location-off" size={20} color={theme.slate400} />
+            <Text style={styles.subzoneEmptyHintText}>
+              No hay subzonas registradas para esta zona. Puedes ingresar el punto en la descripción abajo.
+            </Text>
+          </View>
+        ) : selectedSubzone && selectedSubzoneObj ? (
+          <View style={styles.subzoneSelectedCard}>
+            <View style={styles.subzoneIconBox}>
+              <MaterialIcons
+                name={getSubzoneIcon(selectedSubzoneObj.tipo_subzona_nombre)}
+                size={22}
+                color={theme.primary}
+              />
+            </View>
+            <View style={styles.subzoneCardInfo}>
+              <Text style={styles.subzoneCardTitle}>{selectedSubzoneObj.nombre_subzona}</Text>
+              <View style={styles.subzoneBadgesRow}>
+                {selectedSubzoneObj.tipo_subzona_nombre && (
+                  <View style={styles.subzoneBadge}>
+                    <Text style={styles.subzoneBadgeText}>{selectedSubzoneObj.tipo_subzona_nombre}</Text>
+                  </View>
+                )}
+                {selectedSubzoneObj.piso && (
+                  <View style={[styles.subzoneBadge, styles.subzoneBadgeFloor]}>
+                    <Text style={[styles.subzoneBadgeText, styles.subzoneBadgeFloorText]}>
+                      Piso {selectedSubzoneObj.piso}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.subzoneChangeBtn}
+              onPress={() => setIsSubzoneModalVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.subzoneChangeBtnText}>Cambiar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.subzoneRemoveBtn}
+              onPress={() => setSelectedSubzone(null)}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons name="close" size={18} color={theme.slate400} />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.subzoneSelectTriggerCard}
+            onPress={() => setIsSubzoneModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.subzoneIconBoxInactive}>
+              <MaterialIcons name="add-location-alt" size={22} color={theme.slate500} />
+            </View>
+            <View style={styles.subzoneCardInfo}>
+              <Text style={styles.subzoneSelectTriggerTitle}>Seleccionar punto específico...</Text>
+              <Text style={styles.subzoneSelectTriggerSubtitle}>
+                {availableSubzones.length} puntos disponibles (Aulas, Oficinas, Baños, etc.)
+              </Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={22} color={theme.slate400} />
+          </TouchableOpacity>
+        )}
+      </View>
 
       <View style={{ marginTop: 24 }}>
         <InputField
@@ -488,6 +661,189 @@ export default function NewReportScreen() {
           />
         )}
       </View>
+
+      {/* Modal Selector de Subzonas con Doble Filtro */}
+      <Modal
+        visible={isSubzoneModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsSubzoneModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalDragHandle} />
+
+            {/* Encabezado del modal */}
+            <View style={styles.modalHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.modalTitle}>Punto Específico / Subzona</Text>
+                <Text style={styles.modalSubtitle}>
+                  {selectedZoneName ? `${selectedZoneName} • ` : ''}{filteredSubzones.length} opciones disponibles
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setIsSubzoneModalVisible(false)}
+                style={styles.modalCloseBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <MaterialIcons name="close" size={22} color={theme.slate500} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Barra de Búsqueda en tiempo real */}
+            <View style={styles.modalSearchContainer}>
+              <MaterialIcons name="search" size={20} color={theme.slate400} />
+              <TextInput
+                style={styles.modalSearchInput}
+                placeholder="Buscar aula, oficina, baño (ej: 204, Bienestar)..."
+                placeholderTextColor={theme.slate400}
+                value={subzoneSearch}
+                onChangeText={setSubzoneSearch}
+                clearButtonMode="while-editing"
+              />
+              {subzoneSearch.length > 0 && (
+                <TouchableOpacity onPress={() => setSubzoneSearch('')}>
+                  <MaterialIcons name="cancel" size={18} color={theme.slate400} />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Filtro por Tipo de Espacio */}
+            {availableTypes.length > 1 && (
+              <View style={styles.filterSection}>
+                <Text style={styles.filterLabel}>Tipo de Espacio</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+                  <TouchableOpacity
+                    style={[styles.filterChip, selectedTypeFilter === 'all' && styles.filterChipActive]}
+                    onPress={() => setSelectedTypeFilter('all')}
+                  >
+                    <Text style={[styles.filterChipText, selectedTypeFilter === 'all' && styles.filterChipTextActive]}>
+                      Todos
+                    </Text>
+                  </TouchableOpacity>
+                  {availableTypes.map((tipo) => (
+                    <TouchableOpacity
+                      key={tipo}
+                      style={[styles.filterChip, selectedTypeFilter === tipo && styles.filterChipActive]}
+                      onPress={() => setSelectedTypeFilter(tipo)}
+                    >
+                      <Text style={[styles.filterChipText, selectedTypeFilter === tipo && styles.filterChipTextActive]}>
+                        {tipo}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Filtro por Piso / Nivel */}
+            {availableFloors.length > 1 && (
+              <View style={styles.filterSection}>
+                <Text style={styles.filterLabel}>Piso / Nivel</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+                  <TouchableOpacity
+                    style={[styles.filterChip, selectedFloorFilter === 'all' && styles.filterChipActive]}
+                    onPress={() => setSelectedFloorFilter('all')}
+                  >
+                    <Text style={[styles.filterChipText, selectedFloorFilter === 'all' && styles.filterChipTextActive]}>
+                      Todos los pisos
+                    </Text>
+                  </TouchableOpacity>
+                  {availableFloors.map((piso) => (
+                    <TouchableOpacity
+                      key={piso}
+                      style={[styles.filterChip, selectedFloorFilter === piso && styles.filterChipActive]}
+                      onPress={() => setSelectedFloorFilter(piso)}
+                    >
+                      <Text style={[styles.filterChipText, selectedFloorFilter === piso && styles.filterChipTextActive]}>
+                        Piso {piso}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Lista de subzonas */}
+            <ScrollView style={styles.subzoneList} showsVerticalScrollIndicator={false}>
+              {filteredSubzones.length === 0 ? (
+                <View style={styles.subzoneListEmpty}>
+                  <MaterialIcons name="search-off" size={36} color={theme.slate400} />
+                  <Text style={styles.subzoneListEmptyText}>No se encontraron subzonas</Text>
+                  <Text style={styles.subzoneListEmptySubtext}>
+                    Intenta cambiar los filtros o el término de búsqueda.
+                  </Text>
+                </View>
+              ) : (
+                filteredSubzones.map((item) => {
+                  const isSelected = selectedSubzone === item.id;
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[styles.subzoneListItem, isSelected && styles.subzoneListItemActive]}
+                      onPress={() => {
+                        setSelectedSubzone(item.id);
+                        setIsSubzoneModalVisible(false);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.subzoneListIcon, isSelected && styles.subzoneListIconActive]}>
+                        <MaterialIcons
+                          name={getSubzoneIcon(item.tipo_subzona_nombre)}
+                          size={20}
+                          color={isSelected ? theme.primary : theme.slate500}
+                        />
+                      </View>
+                      <View style={styles.subzoneListContent}>
+                        <Text style={[styles.subzoneListName, isSelected && styles.subzoneListNameActive]}>
+                          {item.nombre_subzona}
+                        </Text>
+                        <View style={styles.subzoneListMetaRow}>
+                          {item.tipo_subzona_nombre && (
+                            <Text style={styles.subzoneListType}>{item.tipo_subzona_nombre}</Text>
+                          )}
+                          {item.tipo_subzona_nombre && item.piso && (
+                            <Text style={styles.subzoneListDot}>•</Text>
+                          )}
+                          {item.piso && (
+                            <Text style={styles.subzoneListFloor}>Piso {item.piso}</Text>
+                          )}
+                        </View>
+                      </View>
+                      <MaterialIcons
+                        name={isSelected ? "radio-button-checked" : "radio-button-unchecked"}
+                        size={20}
+                        color={isSelected ? theme.primary : theme.slate400}
+                      />
+                    </TouchableOpacity>
+                  );
+                })
+              )}
+            </ScrollView>
+
+            {/* Footer del Modal */}
+            <View style={styles.modalFooter}>
+              {selectedSubzone && (
+                <TouchableOpacity
+                  style={styles.modalClearBtn}
+                  onPress={() => {
+                    setSelectedSubzone(null);
+                    setIsSubzoneModalVisible(false);
+                  }}
+                >
+                  <Text style={styles.modalClearBtnText}>Quitar selección</Text>
+                </TouchableOpacity>
+              )}
+              <Button
+                title="Cerrar"
+                variant="outline"
+                onPress={() => setIsSubzoneModalVisible(false)}
+                style={{ flex: 1 }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -697,5 +1053,344 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 12,
     color: theme.slate600,
     marginTop: 2,
+  },
+
+  // Subzone Trigger Card Styles
+  subzoneSectionContainer: {
+    marginTop: 20,
+  },
+  subzoneSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  subzoneOptionalBadge: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: theme.primary,
+    backgroundColor: theme.primaryLight,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  subzoneEmptyHint: {
+    backgroundColor: theme.slate50,
+    borderWidth: 1,
+    borderColor: theme.slate200,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  subzoneEmptyHintText: {
+    fontSize: 13,
+    color: theme.slate500,
+    flex: 1,
+    lineHeight: 18,
+  },
+  subzoneLoadingCard: {
+    backgroundColor: theme.card,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: theme.slate200,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  subzoneLoadingText: {
+    fontSize: 13,
+    color: theme.slate500,
+  },
+  subzoneSelectedCard: {
+    backgroundColor: theme.white,
+    borderWidth: 1.5,
+    borderColor: theme.primary,
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  subzoneSelectTriggerCard: {
+    backgroundColor: theme.white,
+    borderWidth: 1,
+    borderColor: theme.slate200,
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  subzoneIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: theme.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  subzoneIconBoxInactive: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: theme.slate100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  subzoneCardInfo: {
+    flex: 1,
+  },
+  subzoneCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: theme.slate900,
+  },
+  subzoneSelectTriggerTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.slate800,
+  },
+  subzoneSelectTriggerSubtitle: {
+    fontSize: 12,
+    color: theme.slate500,
+    marginTop: 2,
+  },
+  subzoneBadgesRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 4,
+  },
+  subzoneBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: theme.slate100,
+  },
+  subzoneBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: theme.slate700,
+  },
+  subzoneBadgeFloor: {
+    backgroundColor: '#EEF2FF',
+  },
+  subzoneBadgeFloorText: {
+    color: '#4F46E5',
+  },
+  subzoneChangeBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: theme.primaryLight,
+  },
+  subzoneChangeBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.primary,
+  },
+  subzoneRemoveBtn: {
+    padding: 6,
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: theme.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    height: '85%',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalDragHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.slate200,
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 14,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.slate900,
+  },
+  modalSubtitle: {
+    fontSize: 12,
+    color: theme.slate500,
+    marginTop: 2,
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  modalSearchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.slate100,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 6,
+    marginBottom: 12,
+  },
+  modalSearchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: theme.slate900,
+    marginLeft: 8,
+  },
+  filterSection: {
+    marginBottom: 10,
+  },
+  filterLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: theme.slate500,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  filterScroll: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingRight: 10,
+  },
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: theme.slate100,
+    borderWidth: 1,
+    borderColor: theme.slate200,
+    marginRight: 6,
+  },
+  filterChipActive: {
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
+  },
+  filterChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.slate700,
+  },
+  filterChipTextActive: {
+    color: theme.white,
+  },
+  subzoneList: {
+    flex: 1,
+    marginVertical: 8,
+  },
+  subzoneListEmpty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    gap: 6,
+  },
+  subzoneListEmptyText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.slate700,
+    marginTop: 6,
+  },
+  subzoneListEmptySubtext: {
+    fontSize: 12,
+    color: theme.slate500,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  subzoneListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.slate200,
+    marginBottom: 8,
+    backgroundColor: theme.white,
+    gap: 10,
+  },
+  subzoneListItemActive: {
+    borderColor: theme.primary,
+    backgroundColor: theme.primaryLight,
+  },
+  subzoneListIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: theme.slate100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  subzoneListIconActive: {
+    backgroundColor: theme.white,
+  },
+  subzoneListContent: {
+    flex: 1,
+  },
+  subzoneListName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.slate900,
+  },
+  subzoneListNameActive: {
+    color: theme.primary,
+    fontWeight: '700',
+  },
+  subzoneListMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  subzoneListType: {
+    fontSize: 12,
+    color: theme.slate500,
+  },
+  subzoneListDot: {
+    fontSize: 12,
+    color: theme.slate400,
+  },
+  subzoneListFloor: {
+    fontSize: 12,
+    color: theme.slate500,
+  },
+  modalFooter: {
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: theme.slate100,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  modalClearBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: theme.slate200,
+  },
+  modalClearBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.slate700,
   },
 });
