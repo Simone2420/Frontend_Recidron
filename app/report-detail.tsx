@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState, useMemo } from 'react';
 import { userService } from '../src/services/user_service';
 import { WasteReport, wasteService } from '../src/services/waste_service';
+import { locationService } from '../src/services/location_service';
 
 import {
   ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
@@ -70,7 +71,21 @@ export default function ReportDetailScreen() {
       }
     };
     fetchReport();
-  }, [id]); 
+  }, [id]);
+
+  const { coordsText, precisionText, altitudText } = useMemo(() => {
+    const lat = report?.geolocalizacion?.latitud ?? report?.latitud;
+    const lng = report?.geolocalizacion?.longitud ?? report?.longitud;
+    const precision = report?.geolocalizacion?.precision ?? report?.precision;
+    const altitud = report?.geolocalizacion?.altitud ?? report?.altitud;
+
+    return {
+      coordsText: locationService.formatCoordinates(lat, lng),
+      precisionText: locationService.formatPrecision(precision),
+      altitudText: locationService.formatAltitude(altitud),
+    };
+  }, [report]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Header */}
@@ -187,18 +202,18 @@ export default function ReportDetailScreen() {
               <View style={styles.coordsGrid}>
                 <View style={styles.coordCell}>
                   <Text style={styles.classLabel}>COORDENADAS</Text>
-                  <Text style={styles.cardValueMono}>No especificada</Text>
+                  <Text style={styles.cardValueMono}>{coordsText}</Text>
                 </View>
                 <View style={styles.coordCell}>
                   <Text style={styles.classLabel}>PRECISIÓN</Text>
                   <View style={styles.classMaterialRow}>
                     <MaterialIcons name="gps-fixed" size={16} color={theme.primary} />
-                    <Text style={styles.cardValue}>No especificada</Text>
+                    <Text style={styles.cardValue}>{precisionText}</Text>
                   </View>
                 </View>
                 <View style={styles.coordCell}>
                   <Text style={styles.classLabel}>ALTITUD</Text>
-                  <Text style={styles.cardValue}>No especificada</Text>
+                  <Text style={styles.cardValue}>{altitudText}</Text>
                 </View>
               </View>
             </View>
