@@ -8,6 +8,22 @@ export interface WasteCatalogItem {
   nombre_tamano?: string;
 }
 
+export interface TipoSubzone {
+  id: number;
+  nombre_tipo: string;
+  es_activo?: boolean;
+}
+
+export interface Subzone {
+  id: number;
+  nombre_subzona: string;
+  piso: string;
+  zona_id: number;
+  tipo_subzona_id: number;
+  tipo_subzona_nombre?: string;
+  es_activo?: boolean;
+}
+
 export interface WasteReport {
   id?: number | string;
   descripcion?: string;
@@ -15,6 +31,7 @@ export interface WasteReport {
   tipo_residuo_id?: number;
   material_id?: number;
   zona_id?: number;
+  subzona_id?: number;
   tamano_id?: number;
   fecha_reporte?: string;
   es_activo?: number;
@@ -23,6 +40,11 @@ export interface WasteReport {
   location?: string;
   material?: string;
   dateStr?: string;
+  // Subzona detallada
+  subzona_nombre?: string;
+  subzona_piso?: string;
+  subzona_tipo?: string;
+  subzona?: Subzone | null;
   // Campos de coordenadas GPS
   latitud?: number;
   longitud?: number;
@@ -79,12 +101,35 @@ export const wasteService = {
       tamano_id: reportData.tamano_id,
     };
 
+    if (reportData.subzona_id !== undefined && reportData.subzona_id !== null) {
+      payload.subzona_id = reportData.subzona_id;
+    }
     if (reportData.latitud !== undefined && reportData.latitud !== null) payload.latitud = reportData.latitud;
     if (reportData.longitud !== undefined && reportData.longitud !== null) payload.longitud = reportData.longitud;
     if (reportData.altitud !== undefined && reportData.altitud !== null) payload.altitud = reportData.altitud;
     if (reportData.precision !== undefined && reportData.precision !== null) payload.precision = reportData.precision;
     
     const response = await api.post('/reportes/', payload);
+    return response.data;
+  },
+
+  getSubzones: async (zonaId?: number, piso?: string, tipoId?: number): Promise<Subzone[]> => {
+    const params: string[] = [];
+    if (zonaId !== undefined) params.push(`zona_id=${zonaId}`);
+    if (piso && piso !== 'all') params.push(`piso=${encodeURIComponent(piso)}`);
+    if (tipoId !== undefined) params.push(`tipo_id=${tipoId}`);
+    const query = params.length > 0 ? `?${params.join('&')}` : '';
+    const response = await api.get(`/subzonas${query}`);
+    return response.data;
+  },
+
+  getSubzoneTypes: async (): Promise<TipoSubzone[]> => {
+    const response = await api.get('/tipos-subzona');
+    return response.data;
+  },
+
+  getSubzoneById: async (id: number): Promise<Subzone> => {
+    const response = await api.get(`/subzonas/${id}`);
     return response.data;
   },
 
