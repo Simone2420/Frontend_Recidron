@@ -69,6 +69,17 @@ export default function LoginScreen() {
           </View>
           <Text style={styles.title}>Recidron</Text>
           <Text style={styles.subtitle}>Gestión de Residuos — UniCundinamarca</Text>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => router.push({ pathname: '/(auth)/onboarding' as any, params: { fromLogin: 'true' } })}
+            style={styles.onboardingPillButton}
+            accessibilityLabel="Ver guía de bienvenida y funcionalidades"
+            accessibilityRole="button"
+          >
+            <MaterialIcons name="auto-stories" size={15} color={theme.primary} />
+            <Text style={styles.onboardingPillText}>Conoce Recidron · Ver Guía</Text>
+            <MaterialIcons name="chevron-right" size={16} color={theme.primary} />
+          </TouchableOpacity>
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(800).delay(400)} style={styles.formContainer}>
@@ -108,14 +119,25 @@ export default function LoginScreen() {
           />
         </Animated.View>
 
-        <Animated.View entering={FadeIn.duration(800).delay(600)} style={styles.footerContainer}>
+        <Animated.View entering={FadeIn.duration(800).delay(550)} style={styles.guideContainer}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => router.push({ pathname: '/(auth)/onboarding' as any, params: { fromLogin: 'true' } })}
+            style={styles.guideButton}
+          >
+            <MaterialIcons name="explore" size={16} color={theme.primary} />
+            <Text style={styles.guideButtonText}>¿Primera vez aquí? Descubre cómo funciona</Text>
+          </TouchableOpacity>
+        </Animated.View>
+
+        <Animated.View entering={FadeIn.duration(800).delay(650)} style={styles.footerContainer}>
           <Text style={styles.footerText}>¿No tienes una cuenta? </Text>
           <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(auth)/register')}>
             <Text style={styles.registerText}>Regístrate</Text>
           </TouchableOpacity>
         </Animated.View>
 
-        <Animated.View entering={FadeIn.duration(800).delay(800)} style={{ alignItems: 'center', marginTop: 16 }}>
+        <Animated.View entering={FadeIn.duration(800).delay(800)} style={{ alignItems: 'center', marginTop: 14 }}>
           <TouchableOpacity activeOpacity={0.7} onPress={() => setSupportVisible(true)}>
             <Text style={{ color: theme.slate500, fontSize: 13, textDecorationLine: 'underline' }}>
               ¿Necesitas Ayuda? Contactar Soporte
@@ -176,6 +198,40 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontWeight: '500',
     color: theme.slate500,
     textAlign: 'center',
+  },
+  onboardingPillButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.primaryLight,
+    borderWidth: 1,
+    borderColor: theme.primaryBorder,
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    marginTop: 14,
+    gap: 6,
+  },
+  onboardingPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.primary,
+  },
+  guideContainer: {
+    alignItems: 'center',
+    marginTop: 18,
+    marginBottom: 8,
+  },
+  guideButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  guideButtonText: {
+    color: theme.slate700,
+    fontSize: 13.5,
+    fontWeight: '500',
   },
   formContainer: {
     width: '100%',
