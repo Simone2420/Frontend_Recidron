@@ -266,12 +266,12 @@ export function OnboardingCarousel({ onComplete, onSkip }: OnboardingCarouselPro
             style={styles.startButton}
             activeOpacity={0.85}
             onPress={handleNext}
-            accessibilityLabel="Comenzar con Recidron"
+            accessibilityLabel="Comenzar"
             accessibilityRole="button"
           >
-            <Text style={styles.startButtonText}>Comenzar con Recidron</Text>
+            <Text style={styles.startButtonText} numberOfLines={1}>Comenzar</Text>
             <View style={styles.startArrowBadge}>
-              <MaterialIcons name="arrow-forward" size={18} color="#052e16" />
+              <MaterialIcons name="arrow-forward" size={17} color="#052e16" />
             </View>
           </TouchableOpacity>
         ) : (
@@ -282,7 +282,7 @@ export function OnboardingCarousel({ onComplete, onSkip }: OnboardingCarouselPro
             accessibilityLabel="Siguiente diapositiva"
             accessibilityRole="button"
           >
-            <MaterialIcons name="arrow-forward" size={24} color="#052e16" />
+            <MaterialIcons name="arrow-forward" size={22} color="#052e16" />
           </TouchableOpacity>
         )}
       </View>
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 12,
+    paddingTop: 8,
     gap: 12,
   },
   indicatorCapsule: {
@@ -475,15 +475,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(8, 38, 27, 0.95)',
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.25)',
-    borderRadius: 30,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    gap: 4,
+    borderRadius: 26,
+    paddingHorizontal: 6,
+    paddingVertical: 5,
+    gap: 3,
   },
   indicatorTab: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 33,
+    height: 33,
+    borderRadius: 16.5,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -491,9 +491,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#34d399',
   },
   nextCircleButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#34d399',
     justifyContent: 'center',
     alignItems: 'center',
@@ -504,15 +504,14 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   startButton: {
-    flex: 1,
-    height: 52,
-    borderRadius: 26,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#34d399',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    gap: 10,
+    paddingHorizontal: 18,
+    gap: 8,
     shadowColor: '#34d399',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
@@ -520,16 +519,16 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   startButtonText: {
-    fontSize: 14.5,
+    fontSize: 15,
     fontWeight: '700',
     color: '#052e16',
     letterSpacing: 0.2,
   },
   startArrowBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(5, 46, 22, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },
